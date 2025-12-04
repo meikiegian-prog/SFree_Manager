@@ -1,0 +1,32 @@
+/* 项目卡片样式 - HCI：圆角、阴影、大按钮 */
+.project-card {
+  padding: 30rpx;
+  margin: 20rpx 30rpx;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1);
+}
+
+.card-title {
+  font-size: 36rpx;
+  font-weight: 500;
+  margin-bottom: 20rpx;
+  color: #333;
+}
+
+.card-info {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 30rpx;
+}
+
+.card-actions {
+  display: flex;
+  gap: 20rpx;
+  flex-wrap: wrap;
+}
+
+.timer-btn, .finish-btn, .detail-btn {
+  flex: 1;
+  min-width: 200rpx;
+}

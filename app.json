@@ -1,0 +1,19 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/project/project",
+    "pages/statistics/statistics"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#2E7DFF",
+    "navigationBarTitleText": "智管自由",
+    "navigationBarTextStyle": "white"
+  },
+  "usingComponents": {
+    "ec-canvas": "/ec-canvas/ec-canvas",
+    "project-card": "/components/project-card/project-card",
+    "record-panel": "/components/record-panel/record-panel"
+  },
+  "sitemapLocation": "sitemap.json"
+}

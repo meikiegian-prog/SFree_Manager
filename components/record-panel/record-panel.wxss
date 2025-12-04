@@ -1,0 +1,52 @@
+/* 快速记录面板样式 - 适配原生语音输入 */
+.record-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 30rpx 30rpx 0 0;
+  padding: 30rpx;
+  box-shadow: 0 -4rpx 12rpx rgba(0,0,0,0.1);
+  z-index: 999;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.panel-title {
+  font-size: 36rpx;
+  font-weight: 500;
+}
+
+.close-btn {
+  font-size: 40rpx;
+  width: 60rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  padding: 0;
+  background: #f5f5f5;
+  border-radius: 50%;
+  border: none;
+}
+
+/* 核心修改：优化语音输入框，确保麦克风图标显示 */
+.record-input {
+  border: 2rpx solid #eee;
+  border-radius: 10rpx;
+  padding: 20rpx;
+  padding-right: 60rpx; /* 预留麦克风图标空间 */
+  font-size: 32rpx;
+  margin-bottom: 30rpx;
+  min-height: 120rpx;
+  box-sizing: border-box;
+}
+
+.save-btn {
+  width: 100%;
+  border: none;
+}

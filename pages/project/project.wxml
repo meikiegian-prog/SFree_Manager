@@ -1,0 +1,64 @@
+<!-- 项目详情页 - HCI：信息可视化、极简操作 -->
+<view class="project-detail" wx:if="{{project}}">
+  <!-- 项目基本信息 -->
+  <view class="project-header">
+    <view class="project-name">{{project.name}}</view>
+    <view class="project-status {{project.status}}">
+      {{project.status === 'doing' ? '进行中' : project.status === 'finished' ? '已完成' : '已超时'}}
+    </view>
+  </view>
+
+  <!-- 项目数据 -->
+  <view class="project-data p-30">
+    <view class="data-item">
+      <text class="data-label">累计时长</text>
+      <text class="data-value">{{formatTime(project.totalTime)}}</text>
+    </view>
+    <view class="data-item">
+      <text class="data-label">创建时间</text>
+      <text class="data-value">{{project.createTime}}</text>
+    </view>
+    <view class="data-item">
+      <text class="data-label">截止日期</text>
+      <text class="data-value">{{project.deadline || '未设置'}}</text>
+    </view>
+    <view class="data-item">
+      <text class="data-label">预计收入</text>
+      <text class="data-value">¥{{project.income || 0}}</text>
+    </view>
+  </view>
+
+  <!-- 编辑区域 -->
+  <view class="project-edit p-30">
+    <!-- 截止日期选择 -->
+    <view class="edit-item">
+      <text class="edit-label">设置截止日期</text>
+      <picker mode="date" value="{{project.deadline}}" bindchange="onDateChange">
+        <view class="edit-value">{{project.deadline || '点击选择'}}</view>
+      </picker>
+    </view>
+
+    <!-- 收入设置 -->
+    <view class="edit-item">
+      <text class="edit-label">设置预计收入</text>
+      <input 
+        class="edit-input" 
+        type="number" 
+        placeholder="输入金额"
+        value="{{project.income || ''}}"
+        bindinput="onIncomeChange"
+      />
+    </view>
+  </view>
+
+  <!-- 底部操作按钮 -->
+  <view class="project-actions p-30">
+    <button class="btn btn-primary save-btn" bindtap="saveProject">保存修改</button>
+    <button class="btn btn-warning delete-btn" bindtap="deleteProject">删除项目</button>
+  </view>
+</view>
+
+<!-- 空状态 -->
+<view class="empty-tip" wx:else>
+  项目不存在或已被删除
+</view>

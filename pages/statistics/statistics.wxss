@@ -1,0 +1,65 @@
+/* 数据统计页样式 - HCI：图表占比大、交互清晰 */
+.statistics-page {
+  height: 100vh;
+  background: #f5f5f5;
+}
+
+/* 切换标签 */
+.tab-bar {
+  display: flex;
+  background: white;
+}
+
+.tab-btn {
+  flex: 1;
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 32rpx;
+  background: white;
+  color: #666;
+  border: none;
+  border-bottom: 4rpx solid transparent;
+}
+
+.tab-btn.active {
+  color: #2E7DFF;
+  border-bottom: 4rpx solid #2E7DFF;
+}
+
+/* 图表容器 */
+.chart-container {
+  height: 50vh;
+  background: white;
+  margin: 20rpx;
+  border-radius: 20rpx;
+  padding: 20rpx;
+}
+
+/* 数据汇总 */
+.data-summary {
+  background: white;
+  margin: 20rpx;
+  border-radius: 20rpx;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #eee;
+}
+
+.summary-item:last-child {
+  border-bottom: none;
+}
+
+.summary-label {
+  font-size: 32rpx;
+  color: #666;
+}
+
+.summary-value {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 500;
+}

@@ -1,0 +1,45 @@
+<!-- 数据统计页 - HCI：可视化图表、语音解读 -->
+<view class="statistics-page">
+  <!-- 切换统计维度 -->
+  <view class="tab-bar">
+    <button 
+      class="tab-btn {{activeTab === 'time' ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-type="time"
+    >
+      时间分配
+    </button>
+    <button 
+      class="tab-btn {{activeTab === 'income' ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-type="income"
+    >
+      收入统计
+    </button>
+  </view>
+
+  <!-- ECharts图表容器（核心可视化） -->
+  <view class="chart-container">
+    <ec-canvas 
+      id="mychart-dom" 
+      canvas-id="mychart" 
+      ec="{{ec}}"
+    ></ec-canvas>
+  </view>
+
+  <!-- 数据汇总 -->
+  <view class="data-summary p-30">
+    <view class="summary-item">
+      <text class="summary-label">总项目数</text>
+      <text class="summary-value">{{projectList.length}}</text>
+    </view>
+    <view class="summary-item">
+      <text class="summary-label">总工作时长</text>
+      <text class="summary-value">{{formatTime(totalTime)}}</text>
+    </view>
+    <view class="summary-item">
+      <text class="summary-label">总收入</text>
+      <text class="summary-value">¥{{totalIncome}}</text>
+    </view>
+  </view>
+</view>

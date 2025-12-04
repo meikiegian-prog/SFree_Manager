@@ -1,0 +1,81 @@
+/* 首页样式 - HCI：适配滑动、大字体 */
+.index-container {
+  height: 100vh;
+}
+
+.module-swiper {
+  height: 100%;
+}
+
+/* 项目模块 */
+.project-module {
+  height: 100%;
+  padding-bottom: 30rpx;
+}
+
+.add-project-btn {
+  margin: 30rpx;
+}
+
+.empty-tip {
+  text-align: center;
+  font-size: 32rpx;
+  color: #999;
+  margin-top: 100rpx;
+}
+
+/* 时间模块 */
+.time-module {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.current-time {
+  font-size: 80rpx;
+  font-weight: 500;
+  color: #2E7DFF;
+  margin-bottom: 20rpx;
+}
+
+.time-tip {
+  font-size: 32rpx;
+  color: #666;
+}
+
+.tracking-project {
+  font-size: 36rpx;
+  color: #333;
+  background: #e3f2fd;
+  padding: 20rpx 40rpx;
+  border-radius: 40rpx;
+}
+
+/* 收入模块 */
+.income-module {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.total-income {
+  font-size: 60rpx;
+  font-weight: 500;
+  color: #4CAF50;
+  margin-bottom: 40rpx;
+}
+
+.go-statistics {
+  width: 100%;
+}
+
+/* 隐藏的滚动容器（用于下拉触发） */
+.scroll-wrapper {
+  height: 0;
+  width: 0;
+  opacity: 0;
+}

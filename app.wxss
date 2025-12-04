@@ -1,0 +1,46 @@
+/* app.wxss */
+page {
+  background-color: #f5f5f5;
+  font-size: 32rpx;
+  color: #333;
+}
+
+/* 通用按钮样式 */
+.btn {
+  border-radius: 40rpx;
+  font-size: 32rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  text-align: center;
+}
+
+/* 主色按钮 */
+.btn-primary {
+  background-color: #2E7DFF;
+  color: white;
+}
+
+/* 次要按钮 */
+.btn-secondary {
+  background-color: #4CAF50;
+  color: white;
+}
+
+/* 警告按钮 */
+.btn-warning {
+  background-color: #FF9800;
+  color: white;
+}
+
+/* 通用间距 */
+.mt-20 {
+  margin-top: 20rpx;
+}
+
+.mb-20 {
+  margin-bottom: 20rpx;
+}
+
+.p-30 {
+  padding: 30rpx;
+}

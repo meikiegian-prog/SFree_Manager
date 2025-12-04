@@ -1,0 +1,43 @@
+<!-- 项目卡片组件 - 核心HCI：大尺寸按钮、渐变提醒 -->
+<view class="project-card" style="background: {{project.status === 'timeout' ? 'linear-gradient(to right, #ffebee, #f44336)' : 'white'}};">
+  <!-- 项目名称 -->
+  <view class="card-title">{{project.name}}</view>
+  
+  <!-- 项目信息 -->
+  <view class="card-info">
+    <view>截止日期：{{project.deadline || '未设置'}}</view>
+    <view>累计时长：{{formatTime(project.totalTime)}}</view>
+    <view>预计收入：¥{{project.income || 0}}</view>
+  </view>
+  
+  <!-- 操作按钮区 -->
+  <view class="card-actions">
+    <!-- 一键计时按钮（大尺寸：易点击，HCI核心） -->
+    <button 
+      class="btn btn-primary timer-btn" 
+      bindtap="toggleTimer"
+      data-projectid="{{project.id}}"
+    >
+      {{isTracking && currentProjectId === project.id ? '暂停追踪' : '开始追踪'}}
+    </button>
+    
+    <!-- 标记完成按钮 -->
+    <button 
+      class="btn btn-secondary finish-btn" 
+      bindtap="finishProject"
+      data-projectid="{{project.id}}"
+      wx:if="{{project.status !== 'finished'}}"
+    >
+      标记完成
+    </button>
+    
+    <!-- 查看详情按钮 -->
+    <button 
+      class="btn btn-warning detail-btn" 
+      bindtap="goToDetail"
+      data-projectid="{{project.id}}"
+    >
+      详情
+    </button>
+  </view>
+</view>

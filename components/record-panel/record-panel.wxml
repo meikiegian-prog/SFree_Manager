@@ -1,0 +1,28 @@
+<!-- 快速记录面板 - 原生语音输入版（无插件依赖） -->
+<view class="record-panel">
+  <view class="panel-header">
+    <text class="panel-title">快速记录任务</text>
+    <button class="close-btn" bindtap="closePanel">×</button>
+  </view>
+  
+  <!-- 核心修改：原生语音输入框（微信内置，测试号可用） -->
+  <input 
+    class="record-input" 
+    placeholder="点击右侧麦克风语音输入/手动输入"
+    value="{{recordText}}"
+    bindinput="onInputChange"
+    type="text"
+    confirm-type="done"
+    voice-input="true"
+    bindvoiceinput="onVoiceInput"
+  />
+  
+  <!-- 保存任务按钮 -->
+  <button 
+    class="btn btn-secondary save-btn" 
+    bindtap="saveRecord"
+    wx:if="{{recordText}}"
+  >
+    保存任务
+  </button>
+</view>
