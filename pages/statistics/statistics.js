@@ -107,7 +107,6 @@ Page({
       ec: { onInit: initFn }
     });
   },
-
   // 格式化时间
   formatTime(seconds) {
     return app.formatTime(seconds);
