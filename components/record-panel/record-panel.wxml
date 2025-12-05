@@ -1,21 +1,29 @@
-<!-- 快速记录面板 - 原生语音输入版（无插件依赖） -->
+<!-- SFree_Manager/components/record-panel/record-panel.wxml -->
+<!-- 快速记录面板 - 百度语音输入 -->
 <view class="record-panel">
   <view class="panel-header">
     <text class="panel-title">快速记录任务</text>
-    <button class="close-btn" bindtap="closePanel">×</button>
   </view>
   
-  <!-- 核心修改：原生语音输入框（微信内置，测试号可用） -->
+  <!-- 语音/手动输入框 -->
   <input 
     class="record-input" 
-    placeholder="点击右侧麦克风语音输入/手动输入"
+    placeholder="点击麦克风语音输入/手动输入"
     value="{{recordText}}"
     bindinput="onInputChange"
     type="text"
     confirm-type="done"
-    voice-input="true"
-    bindvoiceinput="onVoiceInput"
   />
+  
+  <!-- 语音输入按钮：长按录音，松开结束 -->
+  <button 
+    class="btn btn-primary record-btn" 
+    bindtouchstart="startVoiceInput"
+    bindtouchend="stopVoiceInput"
+    bindtouchcancel="stopVoiceInput"
+  >
+    {{isRecording ? '🎤 正在录音...' : '🎤 按住说话'}}
+  </button>
   
   <!-- 保存任务按钮 -->
   <button 
