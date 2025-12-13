@@ -9,10 +9,29 @@ Page({
     currentTime: '00:00:00',      // 当前计时时长
     showRecordPanel: false,       // 快速记录面板显隐
     trackingProjectName: '',      // 正在追踪的项目名称
-    totalIncome: 0                // 本月总收入
+    totalIncome: 0,               // 本月总收入
+    scrollHeight: 500,            // 滚动容器高度
+    showRecordTrigger: true       // 快速记录触发按钮显隐
   },
 
   onLoad() {
+    // 获取屏幕高度并计算滚动容器高度
+    wx.getSystemInfo({
+      success: (res) => {
+        // 精确的高度计算：屏幕高度 - 顶部按钮高度 - 底部触发按钮高度
+        const screenHeight = res.screenHeight;
+        // 转换为rpx比例计算（1px ≈ 2rpx）
+        const topButtonHeight = 120 / 2; // 顶部按钮高度约120rpx
+        const bottomTriggerHeight = 100 / 2; // 底部触发按钮高度约100rpx
+        const bottomMargin = 30 / 2; // 底部边距30rpx
+        const scrollHeight = screenHeight - topButtonHeight - bottomTriggerHeight - bottomMargin - 40; // 额外减去40px确保完全显示
+        
+        this.setData({
+          scrollHeight: Math.max(scrollHeight, 400) // 设置最小高度400px
+        });
+      }
+    });
+    
     this.initData();
     this.checkAllProjectTimeout();
   },
@@ -179,12 +198,18 @@ Page({
 
   // 显示快速记录面板
   showRecordPanel() {
-    this.setData({ showRecordPanel: true });
+    this.setData({ 
+      showRecordPanel: true,
+      showRecordTrigger: false 
+    });
   },
 
   // 关闭快速记录面板
   closeRecordPanel() {
-    this.setData({ showRecordPanel: false });
+    this.setData({ 
+      showRecordPanel: false,
+      showRecordTrigger: true 
+    });
   },
 
   // 保存快速记录的任务

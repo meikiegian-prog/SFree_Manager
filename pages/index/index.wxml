@@ -15,23 +15,29 @@
           + 新建项目
         </button>
         
-        <!-- 项目卡片列表 -->
-        <block wx:if="{{projectList.length}}">
-          <project-card
-            wx:for="{{projectList}}"
-            wx:key="id"
-            project="{{item}}"
-            isTracking="{{timerData.isTracking}}"
-            currentProjectId="{{timerData.currentProjectId}}"
-            bind:toggleTimer="handleToggleTimer"
-            bind:finishProject="handleFinishProject"
-          />
-        </block>
-        
-        <!-- 空状态 -->
-        <view class="empty-tip" wx:else>
-          暂无项目，点击上方按钮创建～
-        </view>
+        <!-- 项目卡片列表（条件滑动） -->
+        <scroll-view 
+          class="project-scroll"
+          scroll-y="{{projectList.length >= 1}}"
+          style="height: {{scrollHeight}}px"
+        >
+          <block wx:if="{{projectList.length}}">
+            <project-card
+              wx:for="{{projectList}}"
+              wx:key="id"
+              project="{{item}}"
+              isTracking="{{timerData.isTracking}}"
+              currentProjectId="{{timerData.currentProjectId}}"
+              bind:toggleTimer="handleToggleTimer"
+              bind:finishProject="handleFinishProject"
+            />
+          </block>
+          
+          <!-- 空状态 -->
+          <view class="empty-tip" wx:else>
+            暂无项目，点击上方按钮创建～
+          </view>
+        </scroll-view>
         
         <!-- 快速记录面板（下拉呼出） -->
         <record-panel
@@ -72,12 +78,8 @@
     </swiper-item>
   </swiper>
   
-  <!-- 下拉呼出快速记录面板（HCI：极简触发） -->
-  <scroll-view 
-    class="scroll-wrapper"
-    scroll-y
-    bindscrolltolower="showRecordPanel"
-    lower-threshold="50"
-  >
-  </scroll-view>
+  <!-- 底部快速记录触发按钮 -->
+  <view class="record-trigger" bindtap="showRecordPanel" wx:if="{{showRecordTrigger}}">
+    <text class="trigger-text">+ 快速记录</text>
+  </view>
 </view>

@@ -11,6 +11,8 @@
 .project-module {
   height: 100%;
   padding-bottom: 30rpx;
+  display: flex;
+  flex-direction: column;
 }
 
 .add-project-btn {
@@ -73,9 +75,29 @@
   width: 100%;
 }
 
-/* 隐藏的滚动容器（用于下拉触发） */
-.scroll-wrapper {
-  height: 0;
-  width: 0;
-  opacity: 0;
+/* 项目滚动容器 */
+.project-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0; /* 确保flex容器可以收缩 */
+  margin-bottom: 100rpx; /* 为底部触发按钮留出空间 */
+}
+
+/* 底部快速记录触发按钮 */
+.record-trigger {
+  position: fixed;
+  bottom: 30rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2E7DFF;
+  color: white;
+  padding: 20rpx 40rpx;
+  border-radius: 50rpx;
+  box-shadow: 0 4rpx 12rpx rgba(46, 125, 255, 0.3);
+  z-index: 998;
+}
+
+.trigger-text {
+  font-size: 32rpx;
+  font-weight: 500;
 }

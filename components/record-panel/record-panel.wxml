@@ -1,8 +1,9 @@
 <!-- SFree_Manager/components/record-panel/record-panel.wxml -->
 <!-- 快速记录面板 - 百度语音输入 -->
-<view class="record-panel">
+<view class="record-panel {{showPanel ? 'show' : ''}}">
   <view class="panel-header">
     <text class="panel-title">快速记录任务</text>
+    <button class="close-btn" bindtap="closePanel">×</button>
   </view>
   
   <!-- 语音/手动输入框 -->
