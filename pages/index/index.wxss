@@ -1,4 +1,4 @@
-/* 首页样式 - HCI：适配滑动、大字体 */
+/* 首页样式优化 */
 .index-container {
   height: 100vh;
 }
@@ -10,20 +10,32 @@
 /* 项目模块 */
 .project-module {
   height: 100%;
-  padding-bottom: 30rpx;
+  padding: 30rpx;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .add-project-btn {
-  margin: 30rpx;
+  margin: 0 0 30rpx 0;
+  width: 100%;
 }
 
-.empty-tip {
-  text-align: center;
-  font-size: 32rpx;
-  color: #999;
-  margin-top: 100rpx;
+/* 项目卡片容器 */
+.project-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 10rpx; /* 避免滚动条遮挡内容 */
+}
+
+.project-scroll::-webkit-scrollbar {
+  width: 6rpx;
+}
+
+.project-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(46, 125, 255, 0.3);
+  border-radius: 3rpx;
 }
 
 /* 时间模块 */
@@ -33,26 +45,32 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4eaf1 100%);
 }
 
 .current-time {
-  font-size: 80rpx;
-  font-weight: 500;
+  font-size: 90rpx;
+  font-weight: 600;
   color: #2E7DFF;
+  text-shadow: 0 4rpx 8rpx rgba(46, 125, 255, 0.15);
   margin-bottom: 20rpx;
+  letter-spacing: 2rpx;
 }
 
 .time-tip {
-  font-size: 32rpx;
+  font-size: 34rpx;
   color: #666;
+  margin-bottom: 40rpx;
 }
 
 .tracking-project {
   font-size: 36rpx;
   color: #333;
-  background: #e3f2fd;
-  padding: 20rpx 40rpx;
-  border-radius: 40rpx;
+  background: white;
+  padding: 25rpx 50rpx;
+  border-radius: 50rpx;
+  box-shadow: 0 6rpx 16rpx rgba(46, 125, 255, 0.15);
+  margin-top: 20rpx;
 }
 
 /* 收入模块 */
@@ -62,42 +80,52 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(135deg, #f6fbf5 0%, #eaf5ea 100%);
 }
 
 .total-income {
-  font-size: 60rpx;
-  font-weight: 500;
+  font-size: 70rpx;
+  font-weight: 600;
   color: #4CAF50;
-  margin-bottom: 40rpx;
+  text-shadow: 0 4rpx 8rpx rgba(76, 175, 80, 0.15);
+  margin-bottom: 50rpx;
+  letter-spacing: 2rpx;
 }
 
-.go-statistics {
-  width: 100%;
-}
-
-/* 项目滚动容器 */
-.project-scroll {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0; /* 确保flex容器可以收缩 */
-  margin-bottom: 100rpx; /* 为底部触发按钮留出空间 */
-}
-
-/* 底部快速记录触发按钮 */
+/* 底部快速记录按钮优化 */
 .record-trigger {
   position: fixed;
-  bottom: 30rpx;
+  bottom: 40rpx;
   left: 50%;
   transform: translateX(-50%);
   background: #2E7DFF;
   color: white;
-  padding: 20rpx 40rpx;
+  padding: 25rpx 50rpx;
   border-radius: 50rpx;
-  box-shadow: 0 4rpx 12rpx rgba(46, 125, 255, 0.3);
+  box-shadow: 0 8rpx 20rpx rgba(46, 125, 255, 0.3);
   z-index: 998;
+  display: flex;
+  align-items: center;
+  gap: 15rpx;
+  transition: all 0.3s ease;
+}
+
+.record-trigger:hover {
+  transform: translateX(-50%) scale(1.05);
+  box-shadow: 0 10rpx 25rpx rgba(46, 125, 255, 0.4);
 }
 
 .trigger-text {
-  font-size: 32rpx;
+  font-size: 34rpx;
   font-weight: 500;
+}
+
+/* 空状态优化 */
+.empty-tip {
+  text-align: center;
+  font-size: 34rpx;
+  color: #999;
+  margin-top: 150rpx;
+  padding: 0 30rpx;
+  line-height: 1.6;
 }

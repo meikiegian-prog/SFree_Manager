@@ -5,7 +5,8 @@ Page({
   data: {
     projectId: '',   // 当前项目ID
     project: null,   // 当前项目数据
-    tempProject: {}  // 临时修改的数据
+    tempProject: {}, // 临时修改的数据
+    formattedTotalTime: '00:00:00' // 预先格式化的累计时长
   },
 
   onLoad(options) {
@@ -18,6 +19,8 @@ Page({
 
     // 获取项目数据
     const projectList = app.globalData.projectList;
+    console.log('项目列表:', projectList);
+    
     const project = projectList.find(item => item.id === projectId);
     if (!project) {
       wx.showToast({ title: '项目不存在', icon: 'none' });
@@ -25,10 +28,15 @@ Page({
       return;
     }
 
+    console.log('找到的项目数据:', project);
+    const formattedTotalTime = this.formatTime(project.totalTime);
+    console.log('项目累计时长:', project.totalTime, '格式化后:', formattedTotalTime);
+
     this.setData({
       projectId,
       project,
-      tempProject: { ...project } // 复制一份用于临时修改
+      tempProject: { ...project }, // 复制一份用于临时修改
+      formattedTotalTime
     });
   },
 

@@ -6,7 +6,7 @@ App({
       isTracking: false,
       currentProjectId: '',
       startTime: 0,
-      timerInterval: null
+      timerInterval: null //计时器定时器 ID（用于清除计时，防止内存泄漏）
     },
     // 百度语音识别配置（已填入你的密钥）
     baiduYuyin: {
@@ -19,6 +19,8 @@ App({
 
   // 格式化秒数为 时:分:秒
   formatTime(seconds) {
+    // 兼容 undefined 或非数字情况
+    seconds = Number(seconds) || 0; 
     const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
     const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
     const s = (seconds % 60).toString().padStart(2, '0');
@@ -111,7 +113,31 @@ App({
   onLaunch() {
     // 初始化本地缓存
     if (!wx.getStorageSync('projectList')) {
-      wx.setStorageSync('projectList', []);
+      // 如果没有项目数据，创建一些测试数据
+      const testData = [
+        {
+          id: 'test1',
+          name: '测试项目1',
+          deadline: '2024-12-31',
+          totalTime: 7200, // 2小时
+          income: 100,
+          status: 'doing',
+          createTime: new Date().toLocaleDateString()
+        },
+        {
+          id: 'test2', 
+          name: '测试项目2',
+          deadline: '2024-12-25',
+          totalTime: 3600, // 1小时
+          income: 50,
+          status: 'doing',
+          createTime: new Date().toLocaleDateString()
+        }
+      ];
+      wx.setStorageSync('projectList', testData);
+      this.globalData.projectList = testData;
+    } else {
+      this.globalData.projectList = wx.getStorageSync('projectList');
     }
     
     // 修复：onShow 中误调用 that 的问题，直接在 onLaunch 初始化 Token

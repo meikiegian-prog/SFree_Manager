@@ -46,6 +46,9 @@
           bind:saveRecord="handleSaveRecord"
         />
       </view>
+      <view class="record-trigger" bindtap="showRecordPanel" wx:if="{{showRecordTrigger}}">
+       <text class="trigger-text">+ 快速记录</text>
+      </view>
     </swiper-item>
 
     <!-- 时间模块 -->
@@ -79,7 +82,5 @@
   </swiper>
   
   <!-- 底部快速记录触发按钮 -->
-  <view class="record-trigger" bindtap="showRecordPanel" wx:if="{{showRecordTrigger}}">
-    <text class="trigger-text">+ 快速记录</text>
-  </view>
+
 </view>

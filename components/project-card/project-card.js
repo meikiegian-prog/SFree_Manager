@@ -6,7 +6,16 @@ Component({
     // 接收父组件传入的项目数据
     project: {
       type: Object,
-      value: {}
+      value: {},
+      observer: function(newVal) {
+        // 当project数据更新时，计算格式化时间
+        if (newVal && newVal.totalTime !== undefined) {
+          const formattedTime = this.formatTime(newVal.totalTime);
+          this.setData({
+            formattedTotalTime: formattedTime
+          });
+        }
+      }
     },
     // 接收当前计时状态
     isTracking: {
@@ -18,6 +27,10 @@ Component({
       type: String,
       value: ''
     }
+  },
+
+  data: {
+    formattedTotalTime: '00:00:00' // 预先格式化的累计时长
   },
 
   methods: {

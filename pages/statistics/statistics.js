@@ -10,7 +10,8 @@ Page({
     activeTab: 'time',
     projectList: [],
     totalTime: 0,
-    totalIncome: 0
+    totalIncome: 0,
+    formattedTotalTime: '00:00:00'
   },
 
   onLoad() {
@@ -21,13 +22,19 @@ Page({
   // 初始化数据
   initData() {
     const projectList = app.globalData.projectList;
-    const totalTime = projectList.reduce((sum, item) => sum + item.totalTime, 0);
+    console.log('项目列表数据:', projectList);
+    
+    const totalTime = projectList.reduce((sum, item) => sum + (item.totalTime || 0), 0);
     const totalIncome = projectList.reduce((sum, item) => sum + (item.income || 0), 0);
+    const formattedTotalTime = app.formatTime(totalTime);
+    
+    console.log('总时长:', totalTime, '格式化后:', formattedTotalTime);
 
     this.setData({
       projectList,
       totalTime,
-      totalIncome
+      totalIncome,
+      formattedTotalTime
     });
   },
 
@@ -65,7 +72,7 @@ Page({
         },
         tooltip: {
           trigger: 'click',
-          formatter: (params) => `${params.name}：${params.value}${activeTab === 'time' ? '小时' : '元'}`,
+          formatter: (params) => `${params.name}：${activeTab === 'time' ? app.formatTime(params.value * 3600) : params.value}${activeTab === 'time' ? '' : '元'}`,
           textStyle: { fontSize: 28 }
         },
         series: [
@@ -96,7 +103,7 @@ Page({
 
       // 核心修改：仅保留弹窗反馈，移除语音播报
       chart.on('click', (params) => {
-        const text = `本月${params.name}${activeTab === 'time' ? '耗时' : '收入'}${params.value}${activeTab === 'time' ? '小时' : '元'}`;
+        const text = `本月${params.name}${activeTab === 'time' ? '耗时' : '收入'}${activeTab === 'time' ? app.formatTime(params.value * 3600) : params.value}${activeTab === 'time' ? '' : '元'}`;
         wx.showToast({ title: text, icon: 'none' });
       });
 

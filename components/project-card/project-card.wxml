@@ -6,7 +6,7 @@
   <!-- 项目信息 -->
   <view class="card-info">
     <view>截止日期：{{project.deadline || '未设置'}}</view>
-    <view>累计时长：{{formatTime(project.totalTime)}}</view>
+    <view>累计时长：{{formattedTotalTime}}</view>
     <view>预计收入：¥{{project.income || 0}}</view>
   </view>
   

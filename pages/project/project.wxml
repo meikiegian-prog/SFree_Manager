@@ -11,19 +11,27 @@
   <!-- 项目数据 -->
   <view class="project-data p-30">
     <view class="data-item">
-      <text class="data-label">累计时长</text>
-      <text class="data-value">{{formatTime(project.totalTime)}}</text>
+      <text class="data-label">
+        <view class="icon">⏱️</view>累计时长
+      </text>
+      <text class="data-value">{{formattedTotalTime}}</text>
     </view>
     <view class="data-item">
-      <text class="data-label">创建时间</text>
+      <text class="data-label">
+        <view class="icon">📅</view>创建时间
+      </text>
       <text class="data-value">{{project.createTime}}</text>
     </view>
     <view class="data-item">
-      <text class="data-label">截止日期</text>
+      <text class="data-label">
+        <view class="icon">⏰</view>截止日期
+      </text>
       <text class="data-value">{{project.deadline || '未设置'}}</text>
     </view>
     <view class="data-item">
-      <text class="data-label">预计收入</text>
+      <text class="data-label">
+        <view class="icon">💰</view>预计收入
+      </text>
       <text class="data-value">¥{{project.income || 0}}</text>
     </view>
   </view>

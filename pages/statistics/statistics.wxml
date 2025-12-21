@@ -35,7 +35,7 @@
     </view>
     <view class="summary-item">
       <text class="summary-label">总工作时长</text>
-      <text class="summary-value">{{formatTime(totalTime)}}</text>
+      <text class="summary-value">{{formattedTotalTime}}</text>
     </view>
     <view class="summary-item">
       <text class="summary-label">总收入</text>
