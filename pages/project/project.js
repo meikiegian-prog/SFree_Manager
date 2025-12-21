@@ -32,11 +32,24 @@ Page({
     const formattedTotalTime = this.formatTime(project.totalTime);
     console.log('项目累计时长:', project.totalTime, '格式化后:', formattedTotalTime);
 
+    // 解析deadline为日期和时间部分
+    let deadlineDate = '';
+    let deadlineTime = '';
+    if (project.deadline) {
+      const parts = project.deadline.split(' ');
+      if (parts.length === 2) {
+        deadlineDate = parts[0];
+        deadlineTime = parts[1];
+      }
+    }
+
     this.setData({
       projectId,
       project,
       tempProject: { ...project }, // 复制一份用于临时修改
-      formattedTotalTime
+      formattedTotalTime,
+      deadlineDate,
+      deadlineTime
     });
   },
 
@@ -45,11 +58,33 @@ Page({
     return app.formatTime(seconds);
   },
 
-  // 选择截止日期
+  // 选择日期
   onDateChange(e) {
+    const date = e.detail.value;
     this.setData({
-      'tempProject.deadline': e.detail.value
+      deadlineDate: date
     });
+    this.updateDeadline();
+  },
+
+  // 选择时间
+  onTimeChange(e) {
+    const time = e.detail.value;
+    this.setData({
+      deadlineTime: time
+    });
+    this.updateDeadline();
+  },
+
+  // 更新截止时间
+  updateDeadline() {
+    const { deadlineDate, deadlineTime } = this.data;
+    if (deadlineDate && deadlineTime) {
+      const deadline = `${deadlineDate} ${deadlineTime}`;
+      this.setData({
+        'tempProject.deadline': deadline
+      });
+    }
   },
 
   // 修改收入

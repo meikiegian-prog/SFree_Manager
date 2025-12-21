@@ -18,7 +18,7 @@
       bindtap="toggleTimer"
       data-projectid="{{project.id}}"
     >
-      {{isTracking && currentProjectId === project.id ? '暂停追踪' : '开始追踪'}}
+      {{isProjectTracking ? '暂停追踪' : '开始追踪'}}
     </button>
     
     <!-- 标记完成按钮 -->

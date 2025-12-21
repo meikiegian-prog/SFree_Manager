@@ -1,0 +1,197 @@
+/* 追踪项目卡片组件样式 */
+.tracking-project-card {
+  margin: 20rpx;
+  padding: 30rpx;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 晃动动画 */
+.tracking-project-card.shaking {
+  animation: shake 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes shake {
+  0% {
+    transform: translateX(-2rpx);
+  }
+  25% {
+    transform: translateX(2rpx);
+  }
+  50% {
+    transform: translateX(-2rpx);
+  }
+  75% {
+    transform: translateX(2rpx);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* 卡片头部 */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.project-name {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  flex: 1;
+}
+
+.priority-badge {
+  background: #2E7DFF;
+  color: white;
+  padding: 8rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+  font-weight: bold;
+}
+
+/* 卡片内容 */
+.card-content {
+  margin-bottom: 25rpx;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+  font-size: 28rpx;
+}
+
+.info-label {
+  color: #666;
+  min-width: 160rpx;
+}
+
+.info-value {
+  color: #333;
+  font-weight: 500;
+  text-align: right;
+  flex: 1;
+}
+
+.time-remaining {
+  font-weight: bold;
+  color: #F44336;
+}
+
+/* 优先级设置区域 */
+.priority-section {
+  margin-bottom: 25rpx;
+  padding: 20rpx;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 15rpx;
+}
+
+.priority-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 15rpx;
+  display: block;
+}
+
+.priority-buttons {
+  display: flex;
+  gap: 10rpx;
+}
+
+.priority-btn {
+  flex: 1;
+  height: 60rpx;
+  line-height: 60rpx;
+  border: 2rpx solid #ddd;
+  background: white;
+  color: #666;
+  border-radius: 10rpx;
+  font-size: 24rpx;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.priority-btn.active {
+  background: #2E7DFF;
+  color: white;
+  border-color: #2E7DFF;
+}
+
+.priority-btn:active {
+  transform: scale(0.95);
+}
+
+/* 操作按钮区域 */
+.action-buttons {
+  display: flex;
+  gap: 20rpx;
+}
+
+.btn {
+  flex: 1;
+  height: 80rpx;
+  line-height: 80rpx;
+  border: none;
+  border-radius: 15rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: #2E7DFF;
+  color: white;
+}
+
+.btn-primary:active {
+  background: #1a5fd8;
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background: #f5f5f5;
+  color: #666;
+  border: 2rpx solid #ddd;
+}
+
+.btn-secondary:active {
+  background: #e0e0e0;
+  transform: scale(0.98);
+}
+
+/* 响应式设计 */
+@media (max-width: 750rpx) {
+  .tracking-project-card {
+    margin: 15rpx;
+    padding: 25rpx;
+  }
+  
+  .project-name {
+    font-size: 32rpx;
+  }
+  
+  .info-row {
+    font-size: 26rpx;
+  }
+  
+  .btn {
+    height: 70rpx;
+    line-height: 70rpx;
+    font-size: 26rpx;
+  }
+}
+
+/* 颜色主题（根据优先级动态变化） */
+.priority-1 .priority-badge { background: #F44336; }
+.priority-2 .priority-badge { background: #FF9800; }
+.priority-3 .priority-badge { background: #4CAF50; }
+.priority-4 .priority-badge { background: #2196F3; }
+.priority-5 .priority-badge { background: #9C27B0; }

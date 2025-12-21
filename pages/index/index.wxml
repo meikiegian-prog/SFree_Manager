@@ -26,8 +26,7 @@
               wx:for="{{projectList}}"
               wx:key="id"
               project="{{item}}"
-              isTracking="{{timerData.isTracking}}"
-              currentProjectId="{{timerData.currentProjectId}}"
+              trackingProjects="{{trackingProjects}}"
               bind:toggleTimer="handleToggleTimer"
               bind:finishProject="handleFinishProject"
             />
@@ -51,16 +50,40 @@
       </view>
     </swiper-item>
 
-    <!-- 时间模块 -->
+    <!-- 时间模块 - 追踪项目展示 -->
     <swiper-item>
-      <view class="time-module p-30">
-        <view class="current-time">{{currentTime}}</view>
-        <view class="time-tip">当前追踪时长（后台持续记录）</view>
-        
-        <!-- 正在计时的项目 -->
-        <view class="tracking-project mt-20" wx:if="{{timerData.isTracking}}">
-          正在追踪：{{trackingProjectName || '未知项目'}}
+      <view class="time-module">
+        <!-- 模块标题 -->
+        <view class="module-header">
+          <text class="module-title">追踪中的项目</text>
+          <text class="module-subtitle" wx:if="{{trackingProjectsWithFullData.length}}">
+            共{{trackingProjectsWithFullData.length}}个项目正在追踪
+          </text>
         </view>
+        
+        <!-- 追踪项目列表 -->
+        <scroll-view 
+          class="tracking-projects-scroll"
+          scroll-y="{{true}}"
+          style="height: {{scrollHeight}}px"
+        >
+          <view class="tracking-projects-list" wx:if="{{trackingProjectsWithFullData.length}}">
+            <tracking-project-card 
+              wx:for="{{trackingProjectsWithFullData}}" 
+              wx:key="id"
+              project="{{item}}"
+              bind:priorityChange="onPriorityChange"
+              bind:toggleTracking="onToggleTracking"
+            />
+          </view>
+          
+          <!-- 无追踪项目提示 -->
+          <view class="no-tracking" wx:else>
+            <view class="no-tracking-icon">⏱️</view>
+            <text class="no-tracking-text">暂无正在追踪的项目</text>
+            <text class="no-tracking-tip">在项目页面点击"开始追踪"按钮开始计时</text>
+          </view>
+        </scroll-view>
       </view>
     </swiper-item>
 

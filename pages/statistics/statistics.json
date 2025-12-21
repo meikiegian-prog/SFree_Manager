@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "数据统计"
+  "navigationBarTitleText": "数据统计",
+  "usingComponents": {
+    "tracking-project-card": "/components/tracking-project-card/tracking-project-card"
+  }
 }

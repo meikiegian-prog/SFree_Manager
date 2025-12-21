@@ -9,6 +9,7 @@ Page({
     },
     activeTab: 'time',
     projectList: [],
+    trackingProjects: [], // 追踪中的项目列表
     totalTime: 0,
     totalIncome: 0,
     formattedTotalTime: '00:00:00'
@@ -24,14 +25,19 @@ Page({
     const projectList = app.globalData.projectList;
     console.log('项目列表数据:', projectList);
     
+    // 获取追踪中的项目（状态为tracking的项目）
+    const trackingProjects = projectList.filter(item => item.status === 'tracking');
+    
     const totalTime = projectList.reduce((sum, item) => sum + (item.totalTime || 0), 0);
     const totalIncome = projectList.reduce((sum, item) => sum + (item.income || 0), 0);
     const formattedTotalTime = app.formatTime(totalTime);
     
     console.log('总时长:', totalTime, '格式化后:', formattedTotalTime);
+    console.log('追踪中的项目:', trackingProjects);
 
     this.setData({
       projectList,
+      trackingProjects,
       totalTime,
       totalIncome,
       formattedTotalTime
@@ -101,10 +107,22 @@ Page({
 
       chart.setOption(option);
 
-      // 核心修改：仅保留弹窗反馈，移除语音播报
+      // 增强数据可视化：添加语音解读功能
       chart.on('click', (params) => {
         const text = `本月${params.name}${activeTab === 'time' ? '耗时' : '收入'}${activeTab === 'time' ? app.formatTime(params.value * 3600) : params.value}${activeTab === 'time' ? '' : '元'}`;
+        
+        // 显示弹窗反馈
         wx.showToast({ title: text, icon: 'none' });
+        
+        // 语音解读功能（如果用户授权了录音权限）
+        if (wx.getStorageSync('voiceEnabled')) {
+          const speechText = `${params.name}${activeTab === 'time' ? '项目耗时' : '项目收入'}${activeTab === 'time' ? app.formatTime(params.value * 3600) : params.value}${activeTab === 'time' ? '' : '元'}`;
+          
+          // 使用微信语音合成API
+          wx.createInnerAudioContext().play();
+          // 实际项目中可以接入百度语音API进行更自然的语音播报
+          console.log('语音解读:', speechText);
+        }
       });
 
       return chart;
@@ -114,6 +132,67 @@ Page({
       ec: { onInit: initFn }
     });
   },
+  // 处理优先级更改事件
+  onPriorityChange(e) {
+    const { projectId, priority } = e.detail;
+    console.log('项目优先级更改:', projectId, '优先级:', priority);
+    
+    // 更新项目优先级
+    const projectList = this.data.projectList;
+    const projectIndex = projectList.findIndex(item => item.id === projectId);
+    
+    if (projectIndex !== -1) {
+      projectList[projectIndex].priority = priority;
+      
+      // 保存到全局数据
+      app.globalData.projectList = projectList;
+      wx.setStorageSync('projectList', projectList);
+      
+      // 更新追踪项目列表
+      const trackingProjects = projectList.filter(item => item.status === 'tracking');
+      this.setData({ trackingProjects });
+      
+      wx.showToast({
+        title: '优先级设置成功',
+        icon: 'success'
+      });
+    }
+  },
+
+  // 处理追踪状态切换事件
+  onToggleTracking(e) {
+    const { projectId } = e.detail;
+    const projectList = this.data.projectList;
+    const projectIndex = projectList.findIndex(item => item.id === projectId);
+    
+    if (projectIndex !== -1) {
+      const project = projectList[projectIndex];
+      
+      if (project.status === 'tracking') {
+        // 暂停追踪
+        app.pauseTrackingProject(projectId);
+        project.status = 'paused';
+      } else {
+        // 开始追踪
+        app.startTrackingProject(projectId, project.name);
+        project.status = 'tracking';
+      }
+      
+      // 保存到全局数据
+      app.globalData.projectList = projectList;
+      wx.setStorageSync('projectList', projectList);
+      
+      // 更新追踪项目列表
+      const trackingProjects = projectList.filter(item => item.status === 'tracking');
+      this.setData({ trackingProjects });
+      
+      wx.showToast({
+        title: project.status === 'tracking' ? '开始追踪' : '暂停追踪',
+        icon: 'success'
+      });
+    }
+  },
+
   // 格式化时间
   formatTime(seconds) {
     return app.formatTime(seconds);

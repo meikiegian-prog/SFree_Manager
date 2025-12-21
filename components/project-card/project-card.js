@@ -17,20 +17,23 @@ Component({
         }
       }
     },
-    // 接收当前计时状态
-    isTracking: {
-      type: Boolean,
-      value: false
-    },
-    // 接收当前计时项目ID
-    currentProjectId: {
-      type: String,
-      value: ''
+    // 接收追踪项目列表（多项目追踪）
+    trackingProjects: {
+      type: Array,
+      value: [],
+      observer: function(newVal) {
+        // 当追踪项目列表更新时，计算当前项目是否在追踪中
+        const isTracking = newVal.some(item => item.projectId === this.data.project.id);
+        this.setData({
+          isProjectTracking: isTracking
+        });
+      }
     }
   },
 
   data: {
-    formattedTotalTime: '00:00:00' // 预先格式化的累计时长
+    formattedTotalTime: '00:00:00', // 预先格式化的累计时长
+    isProjectTracking: false // 当前项目是否在追踪中
   },
 
   methods: {

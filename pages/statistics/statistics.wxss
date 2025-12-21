@@ -63,3 +63,50 @@
   color: #333;
   font-weight: 500;
 }
+
+/* 追踪项目区域 */
+.tracking-projects-section {
+  background: white;
+  margin: 20rpx;
+  border-radius: 20rpx;
+  padding: 30rpx;
+}
+
+.section-header {
+  margin-bottom: 25rpx;
+}
+
+.section-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.section-subtitle {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.tracking-projects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+/* 响应式设计 */
+@media (max-width: 750rpx) {
+  .tracking-projects-section {
+    margin: 15rpx;
+    padding: 25rpx;
+  }
+  
+  .section-title {
+    font-size: 32rpx;
+  }
+  
+  .section-subtitle {
+    font-size: 26rpx;
+  }
+}

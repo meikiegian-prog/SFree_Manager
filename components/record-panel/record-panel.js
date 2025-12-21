@@ -168,8 +168,10 @@ Component({
           
           if (res.data.err_no === 0 && res.data.result && res.data.result.length > 0) {
             // 识别成功
-            const text = res.data.result[0].replace(/。/g, '');
-            that.setData({ recordText: text });
+            const rawText = res.data.result[0].replace(/。/g, '');
+            // 智能解析语音文本
+            const parsedText = that.parseVoiceText(rawText);
+            that.setData({ recordText: parsedText });
             wx.showToast({ title: '识别成功！', icon: 'success' });
           } else {
             // 识别失败，使用降级方案
@@ -193,6 +195,51 @@ Component({
       });
     },
 
+    // 智能解析语音文本（识别时间和关键词）
+    parseVoiceText(text) {
+      let result = text;
+      
+      // 时间识别模式
+      const timePatterns = [
+        { pattern: /(明天|后天|大后天)\s*(\d{1,2})[点:](\d{0,2})/, replace: '时间：$1$2:$3' },
+        { pattern: /(今天|明天|后天)\s*上午\s*(\d{1,2})[点:](\d{0,2})/, replace: '时间：$1$2:$3 AM' },
+        { pattern: /(今天|明天|后天)\s*下午\s*(\d{1,2})[点:](\d{0,2})/, replace: '时间：$1$2:$3 PM' },
+        { pattern: /(\d{1,2})月(\d{1,2})日\s*(\d{1,2})[点:](\d{0,2})/, replace: '时间：$1月$2日$3:$4' }
+      ];
+      
+      // 关键词识别模式
+      const keywordPatterns = [
+        { pattern: /(客户|客户沟通|会议)/, tag: '客户沟通' },
+        { pattern: /(设计|UI|原型)/, tag: '设计工作' },
+        { pattern: /(编程|代码|开发)/, tag: '开发工作' },
+        { pattern: /(写作|撰稿|文案)/, tag: '文案工作' }
+      ];
+      
+      // 应用时间识别
+      for (const timePattern of timePatterns) {
+        if (timePattern.pattern.test(result)) {
+          result = result.replace(timePattern.pattern, timePattern.replace);
+          break;
+        }
+      }
+      
+      // 应用关键词识别
+      let keywordTags = [];
+      for (const keywordPattern of keywordPatterns) {
+        if (keywordPattern.pattern.test(result)) {
+          keywordTags.push(keywordPattern.tag);
+        }
+      }
+      
+      // 如果有识别到关键词，添加到文本中
+      if (keywordTags.length > 0) {
+        result += ` [${keywordTags.join('、')}]`;
+      }
+      
+      console.log('语音解析结果:', text, '->', result);
+      return result;
+    },
+
     // 降级方案：使用微信原生语音输入弹窗（100%兼容）
     fallbackVoiceInput() {
       wx.showModal({
@@ -202,7 +249,9 @@ Component({
         voice: true, // 显示语音输入按钮
         success: (res) => {
           if (res.confirm && res.content) {
-            this.setData({ recordText: res.content });
+            // 对降级方案也应用智能解析
+            const parsedText = this.parseVoiceText(res.content);
+            this.setData({ recordText: parsedText });
             wx.showToast({ title: '识别成功！', icon: 'success' });
           }
         }

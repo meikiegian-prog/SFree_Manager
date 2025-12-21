@@ -42,4 +42,22 @@
       <text class="summary-value">¥{{totalIncome}}</text>
     </view>
   </view>
+
+  <!-- 追踪项目列表 -->
+  <view class="tracking-projects-section" wx:if="{{trackingProjects.length > 0}}">
+    <view class="section-header">
+      <text class="section-title">追踪中的项目</text>
+      <text class="section-subtitle">共{{trackingProjects.length}}个项目正在追踪</text>
+    </view>
+    
+    <view class="tracking-projects-list">
+      <tracking-project-card 
+        wx:for="{{trackingProjects}}" 
+        wx:key="id"
+        project="{{item}}"
+        bind:priorityChange="onPriorityChange"
+        bind:toggleTracking="onToggleTracking"
+      />
+    </view>
+  </view>
 </view>

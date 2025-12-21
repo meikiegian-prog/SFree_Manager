@@ -2,6 +2,7 @@
   "navigationBarTitleText": "智管自由",
   "usingComponents": {
     "project-card": "/components/project-card/project-card",
-    "record-panel": "/components/record-panel/record-panel"
+    "record-panel": "/components/record-panel/record-panel",
+    "tracking-project-card": "/components/tracking-project-card/tracking-project-card"
   }
 }

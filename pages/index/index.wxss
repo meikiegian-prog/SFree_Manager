@@ -38,39 +38,85 @@
   border-radius: 3rpx;
 }
 
-/* 时间模块 */
+/* 时间模块 - 追踪项目展示 */
 .time-module {
   height: 100%;
   display: flex;
   flex-direction: column;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4eaf1 100%);
+  padding: 30rpx;
+  box-sizing: border-box;
+}
+
+/* 模块标题 */
+.module-header {
+  margin-bottom: 30rpx;
+  text-align: center;
+}
+
+.module-title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #2E7DFF;
+  display: block;
+  margin-bottom: 10rpx;
+}
+
+.module-subtitle {
+  font-size: 28rpx;
+  color: #666;
+}
+
+/* 追踪项目滚动容器 */
+.tracking-projects-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 10rpx; /* 避免滚动条遮挡内容 */
+}
+
+.tracking-projects-scroll::-webkit-scrollbar {
+  width: 6rpx;
+}
+
+.tracking-projects-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(46, 125, 255, 0.3);
+  border-radius: 3rpx;
+}
+
+.tracking-projects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+/* 无追踪项目提示 */
+.no-tracking {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4eaf1 100%);
+  height: 100%;
+  text-align: center;
+  padding: 60rpx;
 }
 
-.current-time {
-  font-size: 90rpx;
-  font-weight: 600;
-  color: #2E7DFF;
-  text-shadow: 0 4rpx 8rpx rgba(46, 125, 255, 0.15);
-  margin-bottom: 20rpx;
-  letter-spacing: 2rpx;
+.no-tracking-icon {
+  font-size: 80rpx;
+  margin-bottom: 30rpx;
 }
 
-.time-tip {
-  font-size: 34rpx;
-  color: #666;
-  margin-bottom: 40rpx;
-}
-
-.tracking-project {
+.no-tracking-text {
   font-size: 36rpx;
-  color: #333;
-  background: white;
-  padding: 25rpx 50rpx;
-  border-radius: 50rpx;
-  box-shadow: 0 6rpx 16rpx rgba(46, 125, 255, 0.15);
-  margin-top: 20rpx;
+  color: #666;
+  margin-bottom: 15rpx;
+  font-weight: 500;
+}
+
+.no-tracking-tip {
+  font-size: 28rpx;
+  color: #999;
+  line-height: 1.5;
 }
 
 /* 收入模块 */

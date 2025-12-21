@@ -36,28 +36,35 @@
     </view>
   </view>
 
-  <!-- 编辑区域 -->
-  <view class="project-edit p-30">
-    <!-- 截止日期选择 -->
-    <view class="edit-item">
-      <text class="edit-label">设置截止日期</text>
-      <picker mode="date" value="{{project.deadline}}" bindchange="onDateChange">
-        <view class="edit-value">{{project.deadline || '点击选择'}}</view>
-      </picker>
-    </view>
+    <!-- 编辑区域 -->
+    <view class="project-edit p-30">
+      <!-- 截止日期选择 - 分开选择日期和时间 -->
+      <view class="edit-item">
+        <text class="edit-label">设置截止日期</text>
+        <picker mode="date" value="{{deadlineDate}}" bindchange="onDateChange">
+          <view class="picker-view">{{deadlineDate || '选择日期'}}</view>
+        </picker>
+      </view>
+      
+      <view class="edit-item">
+        <text class="edit-label">设置截止时间</text>
+        <picker mode="time" value="{{deadlineTime}}" bindchange="onTimeChange">
+          <view class="picker-view">{{deadlineTime || '选择时间'}}</view>
+        </picker>
+      </view>
 
-    <!-- 收入设置 -->
-    <view class="edit-item">
-      <text class="edit-label">设置预计收入</text>
-      <input 
-        class="edit-input" 
-        type="number" 
-        placeholder="输入金额"
-        value="{{project.income || ''}}"
-        bindinput="onIncomeChange"
-      />
+      <!-- 收入设置 -->
+      <view class="edit-item">
+        <text class="edit-label">设置预计收入</text>
+        <input 
+          class="edit-input" 
+          type="number" 
+          placeholder="输入金额"
+          value="{{project.income || ''}}"
+          bindinput="onIncomeChange"
+        />
+      </view>
     </view>
-  </view>
 
   <!-- 底部操作按钮 -->
   <view class="project-actions p-30">

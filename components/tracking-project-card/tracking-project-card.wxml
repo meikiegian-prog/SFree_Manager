@@ -1,0 +1,85 @@
+<!-- 追踪项目卡片组件 - 支持优先级设置、颜色渐变、晃动提醒 -->
+<view 
+  class="tracking-project-card {{isShaking ? 'shaking' : ''}}" 
+  style="background: linear-gradient(to right, {{cardColor}}20, {{cardColor}}40); border-left: 8px solid {{cardColor}};"
+>
+  <!-- 项目头部信息 -->
+  <view class="card-header">
+    <view class="project-name">{{project.name}}</view>
+    <view class="priority-badge">优先级 {{priority}}</view>
+  </view>
+
+  <!-- 项目详细信息 -->
+  <view class="card-content">
+    <view class="info-row">
+      <text class="info-label">截止日期：</text>
+      <text class="info-value">{{project.deadline || '未设置'}}</text>
+    </view>
+    
+    <view class="info-row">
+      <text class="info-label">累计时长：</text>
+      <text class="info-value">{{formattedTotalTime}}</text>
+    </view>
+    
+    <view class="info-row">
+      <text class="info-label">预计收入：</text>
+      <text class="info-value">¥{{project.income || 0}}</text>
+    </view>
+    
+    <view class="info-row">
+      <text class="info-label">剩余时间：</text>
+      <text class="info-value time-remaining">{{remainingTime}}</text>
+    </view>
+  </view>
+
+  <!-- 优先级设置区域 -->
+  <view class="priority-section">
+    <text class="priority-label">设置优先级：</text>
+    <view class="priority-buttons">
+      <button 
+        class="priority-btn {{priority === 1 ? 'active' : ''}}" 
+        bindtap="setPriority"
+        data-priority="1"
+      >1</button>
+      <button 
+        class="priority-btn {{priority === 2 ? 'active' : ''}}" 
+        bindtap="setPriority"
+        data-priority="2"
+      >2</button>
+      <button 
+        class="priority-btn {{priority === 3 ? 'active' : ''}}" 
+        bindtap="setPriority"
+        data-priority="3"
+      >3</button>
+      <button 
+        class="priority-btn {{priority === 4 ? 'active' : ''}}" 
+        bindtap="setPriority"
+        data-priority="4"
+      >4</button>
+      <button 
+        class="priority-btn {{priority === 5 ? 'active' : ''}}" 
+        bindtap="setPriority"
+        data-priority="5"
+      >5</button>
+    </view>
+  </view>
+
+  <!-- 操作按钮区域 -->
+  <view class="action-buttons">
+    <button 
+      class="btn btn-primary tracking-btn" 
+      bindtap="toggleTracking"
+      data-projectid="{{project.id}}"
+    >
+      {{project.status === 'tracking' ? '暂停追踪' : '继续追踪'}}
+    </button>
+    
+    <button 
+      class="btn btn-secondary detail-btn" 
+      bindtap="viewDetails"
+      data-projectid="{{project.id}}"
+    >
+      查看详情
+    </button>
+  </view>
+</view>
