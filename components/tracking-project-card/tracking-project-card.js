@@ -52,14 +52,43 @@ Component({
       return app.formatTime(seconds);
     },
 
-    // 启动计时器，每秒更新剩余时间
+    // 启动计时器，每秒更新剩余时间和累计时长
     startTimer() {
       const timer = setInterval(() => {
         this.calculateRemainingTime();
         this.updateCardStyle();
+        this.updateTotalTime();
       }, 1000);
       
       this.setData({ timer });
+    },
+
+    // 更新累计时长
+    updateTotalTime() {
+      const { project } = this.data;
+      if (!project) return;
+      
+      // 检查当前项目是否正在追踪
+      const isTracking = app.globalData.timerData.trackingProjects.some(
+        item => item.projectId === project.id
+      );
+      
+      if (isTracking) {
+        // 项目正在追踪，实时更新累计时长（每秒增加1秒）
+        const totalTime = (project.totalTime || 0) + 1;
+        const formattedTotalTime = this.formatTime(totalTime);
+        
+        this.setData({
+          formattedTotalTime,
+          'project.totalTime': totalTime
+        });
+        
+        // 通知父组件累计时长已更新
+        this.triggerEvent('timeUpdate', {
+          projectId: project.id,
+          totalTime: totalTime
+        });
+      }
     },
 
     // 计算剩余时间

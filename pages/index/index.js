@@ -139,50 +139,50 @@ Page({
     });
   },
 
-  // 一键开始/暂停计时（多项目版本）
-  handleToggleTimer(e) {
-    const { projectId } = e.detail;
-    const project = this.data.projectList.find(item => item.id === projectId);
-    
-    if (!project) return;
-    
-    // 检查是否已经在追踪
-    const isTracking = app.globalData.timerData.trackingProjects.some(
-      item => item.projectId === projectId
-    );
-    
-    if (!isTracking) {
-      // 开始追踪
-      app.startTrackingProject(projectId, project.name);
-      wx.showToast({ title: `开始追踪：${project.name}`, icon: 'success' });
-    } else {
-      // 暂停追踪
-      app.pauseTrackingProject(projectId);
-      wx.showToast({ title: `暂停追踪：${project.name}`, icon: 'success' });
-    }
-    
-    // 更新数据
-    const trackingProjects = app.getTrackingProjects();
-    const trackingProjectsWithFullData = trackingProjects.map(trackingProject => {
-      const fullProject = app.globalData.projectList.find(p => p.id === trackingProject.projectId);
-      return {
-        ...fullProject,
-        status: 'tracking' // 确保状态为追踪中
-      };
-    }).filter(project => project); // 过滤掉找不到对应项目的条目
-    
-    this.setData({ 
-      timerData: app.globalData.timerData,
-      projectList: app.globalData.projectList,
-      trackingProjects,
-      trackingProjectsWithFullData
-    });
-    
-    // 如果开始追踪，启动计时器
-    if (!isTracking && !this.data.timerData.timerInterval) {
-      this.startTimer();
-    }
-  },
+    // 一键开始/暂停计时（多项目版本）
+    handleToggleTimer(e) {
+      const { projectId } = e.detail;
+      const project = this.data.projectList.find(item => item.id === projectId);
+      
+      if (!project) return;
+      
+      // 检查是否已经在追踪
+      const isTracking = app.globalData.timerData.trackingProjects.some(
+        item => item.projectId === projectId
+      );
+      
+      if (!isTracking) {
+        // 开始追踪
+        app.startTrackingProject(projectId, project.name);
+        wx.showToast({ title: `开始追踪：${project.name}`, icon: 'success' });
+      } else {
+        // 暂停追踪
+        app.pauseTrackingProject(projectId);
+        wx.showToast({ title: `暂停追踪：${project.name}`, icon: 'success' });
+      }
+      
+      // 更新数据
+      const trackingProjects = app.getTrackingProjects();
+      const trackingProjectsWithFullData = trackingProjects.map(trackingProject => {
+        const fullProject = app.globalData.projectList.find(p => p.id === trackingProject.projectId);
+        return {
+          ...fullProject,
+          status: 'tracking' // 确保状态为追踪中
+        };
+      }).filter(project => project); // 过滤掉找不到对应项目的条目
+      
+      this.setData({ 
+        timerData: app.globalData.timerData,
+        projectList: app.globalData.projectList,
+        trackingProjects,
+        trackingProjectsWithFullData
+      });
+      
+      // 如果开始追踪，确保计时器启动（无论当前计时器状态如何）
+      if (!isTracking) {
+        this.startTimer();
+      }
+    },
 
   // 启动计时器
   startTimer() {
@@ -217,6 +217,31 @@ Page({
       const startTimes = trackingProjects.map(p => p.startTime);
       const earliestStartTime = Math.min(...startTimes);
       totalTime = Math.floor((Date.now() - earliestStartTime) / 1000);
+    }
+    
+    // 实时更新每个追踪项目的累计时长（简单方法：每秒增加1秒）
+    if (trackingProjects.length > 0) {
+      const projectList = [...this.data.projectList]; // 创建新数组确保数据变化被检测
+      let hasUpdated = false;
+      
+      trackingProjects.forEach(trackingProject => {
+        const projectIndex = projectList.findIndex(p => p.id === trackingProject.projectId);
+        if (projectIndex !== -1) {
+          // 创建新对象确保数据变化被检测
+          const updatedProject = {
+            ...projectList[projectIndex],
+            totalTime: (projectList[projectIndex].totalTime || 0) + 1
+          };
+          projectList[projectIndex] = updatedProject;
+          hasUpdated = true;
+        }
+      });
+      
+      if (hasUpdated) {
+        // 更新全局数据
+        app.globalData.projectList = projectList;
+        this.setData({ projectList });
+      }
     }
     
     // 将追踪项目转换为完整项目数据

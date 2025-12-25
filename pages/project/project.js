@@ -6,7 +6,9 @@ Page({
     projectId: '',   // 当前项目ID
     project: null,   // 当前项目数据
     tempProject: {}, // 临时修改的数据
-    formattedTotalTime: '00:00:00' // 预先格式化的累计时长
+    formattedTotalTime: '00:00:00', // 预先格式化的累计时长
+    timerInterval: null, // 计时器ID
+    lastUpdateTime: null // 上次更新时间戳
   },
 
   onLoad(options) {
@@ -51,6 +53,71 @@ Page({
       deadlineDate,
       deadlineTime
     });
+  },
+
+  onShow() {
+    // 页面显示时启动计时器，实时更新累计时长
+    this.startTimer();
+  },
+
+  onHide() {
+    // 页面隐藏时停止计时器
+    this.stopTimer();
+  },
+
+  onUnload() {
+    // 页面卸载时停止计时器
+    this.stopTimer();
+  },
+
+  // 启动计时器
+  startTimer() {
+    // 清理旧的计时器
+    this.stopTimer();
+    
+    // 立即更新一次数据
+    this.updateProjectTime();
+    
+    // 启动每秒更新的计时器
+    const timerInterval = setInterval(() => {
+      this.updateProjectTime();
+    }, 1000);
+    
+    this.setData({ timerInterval });
+  },
+
+  // 停止计时器
+  stopTimer() {
+    if (this.data.timerInterval) {
+      clearInterval(this.data.timerInterval);
+      this.setData({ timerInterval: null });
+    }
+  },
+
+  // 更新项目累计时长
+  updateProjectTime() {
+    const { projectId, project } = this.data;
+    if (!project) return;
+    
+    // 检查当前项目是否正在追踪
+    const isTracking = app.globalData.timerData.trackingProjects.some(
+      item => item.projectId === projectId
+    );
+    
+    if (isTracking) {
+      // 项目正在追踪，实时更新累计时长（简单方法：每秒增加1秒）
+      const totalTime = (project.totalTime || 0) + 1;
+      const formattedTotalTime = this.formatTime(totalTime);
+      
+      this.setData({
+        formattedTotalTime,
+        'project.totalTime': totalTime
+      });
+    } else {
+      // 项目未在追踪，使用静态累计时长
+      const formattedTotalTime = this.formatTime(project.totalTime || 0);
+      this.setData({ formattedTotalTime });
+    }
   },
 
   // 格式化时间

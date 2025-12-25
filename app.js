@@ -224,7 +224,8 @@ App({
     const trackingProject = {
       projectId,
       projectName,
-      startTime: Date.now()
+      startTime: Date.now(),
+      lastElapsedTime: 0 // 添加lastElapsedTime属性，用于实时更新累计时长
     };
     
     // 检查是否已经在追踪
@@ -236,8 +237,9 @@ App({
       // 新项目，添加到追踪列表
       this.globalData.timerData.trackingProjects.push(trackingProject);
     } else {
-      // 已存在，更新开始时间
+      // 已存在，更新开始时间和重置lastElapsedTime
       this.globalData.timerData.trackingProjects[existingIndex].startTime = Date.now();
+      this.globalData.timerData.trackingProjects[existingIndex].lastElapsedTime = 0;
     }
     
     // 更新项目状态为追踪中
