@@ -50,18 +50,25 @@ Page({
 
   // 初始化数据
   initData() {
-    const projectList = app.globalData.projectList;
-    const totalIncome = projectList.reduce((sum, item) => sum + (item.income || 0), 0);
+    const allProjects = app.globalData.projectList;
+    
+    // 过滤掉已完成的项目，只显示进行中、追踪中、暂停、超时的项目
+    const projectList = allProjects.filter(item => item.status !== 'finished');
+    // 计算已完成项目的总收入
+    const totalIncome = allProjects
+      .filter(item => item.status === 'finished')
+      .reduce((sum, item) => sum + (item.income || 0), 0);
     
     // 获取追踪项目列表
     const trackingProjects = app.getTrackingProjects();
     
     // 将追踪项目转换为完整项目数据
     const trackingProjectsWithFullData = trackingProjects.map(trackingProject => {
-      const fullProject = projectList.find(p => p.id === trackingProject.projectId);
+      const fullProject = allProjects.find(p => p.id === trackingProject.projectId);
       return {
         ...fullProject,
-        status: 'tracking' // 确保状态为追踪中
+        // 使用项目的实际状态，而不是强制设置为'tracking'
+        status: fullProject ? fullProject.status : 'tracking'
       };
     }).filter(project => project); // 过滤掉找不到对应项目的条目
 
@@ -89,12 +96,12 @@ Page({
   },
 
   // 新建项目（智能解析版本）
-  addProject() {
+  async addProject() {
     wx.showModal({
       title: '新建项目',
       editable: true,
       placeholderText: '输入项目名称或语音描述（如：明天10点客户沟通）',
-      success: (res) => {
+      success: async (res) => {
         if (res.confirm && res.content.trim()) {
           const text = res.content.trim();
           
@@ -111,18 +118,18 @@ Page({
             createTime: new Date().toISOString().slice(0, 16).replace('T', ' ') // 精确到分钟：YYYY-MM-DD HH:mm
           };
 
-          const newList = [...this.data.projectList, newProject];
-          app.saveProjectList(newList);
-          this.setData({ projectList: newList });
+          const newList = [...app.globalData.projectList, newProject];
+          await app.saveProjectList(newList);
+          this.setData({ projectList: newList.filter(item => item.status !== 'finished') });
 
           // 如果建议自动追踪，询问用户
           if (parsedInfo.autoStartTracking) {
             wx.showModal({
               title: '智能建议',
               content: `检测到${parsedInfo.name}可能需要立即开始工作，是否自动开始追踪？`,
-              success: (trackRes) => {
+              success: async (trackRes) => {
                 if (trackRes.confirm) {
-                  app.startTrackingProject(newProject.id, newProject.name);
+                  await app.startTrackingProject(newProject.id, newProject.name);
                   this.setData({ 
                     timerData: app.globalData.timerData,
                     trackingProjectName: newProject.name
@@ -140,7 +147,7 @@ Page({
   },
 
     // 一键开始/暂停计时（多项目版本）
-    handleToggleTimer(e) {
+    async handleToggleTimer(e) {
       const { projectId } = e.detail;
       const project = this.data.projectList.find(item => item.id === projectId);
       
@@ -153,11 +160,11 @@ Page({
       
       if (!isTracking) {
         // 开始追踪
-        app.startTrackingProject(projectId, project.name);
+        await app.startTrackingProject(projectId, project.name);
         wx.showToast({ title: `开始追踪：${project.name}`, icon: 'success' });
       } else {
         // 暂停追踪
-        app.pauseTrackingProject(projectId);
+        await app.pauseTrackingProject(projectId);
         wx.showToast({ title: `暂停追踪：${project.name}`, icon: 'success' });
       }
       
@@ -167,7 +174,8 @@ Page({
         const fullProject = app.globalData.projectList.find(p => p.id === trackingProject.projectId);
         return {
           ...fullProject,
-          status: 'tracking' // 确保状态为追踪中
+          // 使用项目的实际状态，而不是强制设置为'tracking'
+          status: fullProject ? fullProject.status : 'tracking'
         };
       }).filter(project => project); // 过滤掉找不到对应项目的条目
       
@@ -249,7 +257,8 @@ Page({
       const fullProject = this.data.projectList.find(p => p.id === trackingProject.projectId);
       return {
         ...fullProject,
-        status: 'tracking' // 确保状态为追踪中
+        // 使用项目的实际状态，而不是强制设置为'tracking'
+        status: fullProject ? fullProject.status : 'tracking'
       };
     }).filter(project => project); // 过滤掉找不到对应项目的条目
     
@@ -263,21 +272,35 @@ Page({
   },
 
   // 标记项目完成（使用新的成就系统）
-  handleFinishProject(e) {
+  async handleFinishProject(e) {
     const { projectId } = e.detail;
     
     // 使用新的成就系统处理项目完成
-    app.completeProjectAchievement(projectId);
+    await app.completeProjectAchievement(projectId);
     
-    // 更新本地数据
-    this.setData({ projectList: app.globalData.projectList });
+    // 更新本地数据，包括追踪项目列表和完整追踪项目数据
+    const trackingProjects = app.getTrackingProjects();
+    const trackingProjectsWithFullData = trackingProjects.map(trackingProject => {
+      const fullProject = app.globalData.projectList.find(p => p.id === trackingProject.projectId);
+      return {
+        ...fullProject,
+        // 使用项目的实际状态，而不是强制设置为'tracking'
+        status: fullProject ? fullProject.status : 'tracking'
+      };
+    }).filter(project => project); // 过滤掉找不到对应项目的条目
+    
+    this.setData({ 
+      projectList: app.globalData.projectList,
+      trackingProjects,
+      trackingProjectsWithFullData
+    });
   },
 
   // 检查超时项目
-  checkAllProjectTimeout() {
-    this.data.projectList.forEach(project => {
-      app.checkProjectTimeout(project.id);
-    });
+  async checkAllProjectTimeout() {
+    for (const project of this.data.projectList) {
+      await app.checkProjectTimeout(project.id);
+    }
     this.setData({ projectList: app.globalData.projectList });
   },
 
@@ -298,33 +321,37 @@ Page({
   },
 
     // 保存快速记录的任务
-    handleSaveRecord(e) {
+    async handleSaveRecord(e) {
       const { text } = e.detail;
+      
+      // 使用智能解析功能解析用户输入
+      const parsedInfo = app.parseProjectCreationText(text);
+      
       const newProject = {
         id: `task_${Date.now()}`,
-        name: `${text}`,
-        deadline: '',
+        name: parsedInfo.name,
+        deadline: parsedInfo.deadline,
         totalTime: 0,
         income: 0,
         status: 'doing',
         createTime: new Date().toISOString().slice(0, 16).replace('T', ' ') // 精确到分钟：YYYY-MM-DD HH:mm
       };
 
-      const newList = [...this.data.projectList, newProject];
-      app.saveProjectList(newList);
-      this.setData({ projectList: newList });
+      const newList = [...app.globalData.projectList, newProject];
+      await app.saveProjectList(newList);
+      this.setData({ projectList: newList.filter(item => item.status !== 'finished') });
 
       wx.showToast({ title: '任务保存成功！', icon: 'success' });
     },
 
   // 暂停追踪（时间模块中的暂停按钮）
-  pauseTracking(e) {
+  async pauseTracking(e) {
     const projectId = e.currentTarget.dataset.projectid;
     const project = this.data.projectList.find(item => item.id === projectId);
     
     if (!project) return;
     
-    app.pauseTrackingProject(projectId);
+    await app.pauseTrackingProject(projectId);
     wx.showToast({ title: `已暂停追踪：${project.name}`, icon: 'success' });
     
     // 更新数据
@@ -336,20 +363,19 @@ Page({
   },
 
   // 处理优先级更改事件
-  onPriorityChange(e) {
+  async onPriorityChange(e) {
     const { projectId, priority } = e.detail;
     console.log('项目优先级更改:', projectId, '优先级:', priority);
     
     // 更新项目优先级
-    const projectList = this.data.projectList;
+    const projectList = app.globalData.projectList;
     const projectIndex = projectList.findIndex(item => item.id === projectId);
     
     if (projectIndex !== -1) {
       projectList[projectIndex].priority = priority;
       
       // 保存到全局数据
-      app.globalData.projectList = projectList;
-      wx.setStorageSync('projectList', projectList);
+      await app.saveProjectList(projectList);
       
       // 更新追踪项目列表
       this.updateTrackingData();
@@ -362,9 +388,9 @@ Page({
   },
 
   // 处理追踪状态切换事件
-  onToggleTracking(e) {
+  async onToggleTracking(e) {
     const { projectId } = e.detail;
-    const projectList = this.data.projectList;
+    const projectList = app.globalData.projectList;
     const projectIndex = projectList.findIndex(item => item.id === projectId);
     
     if (projectIndex !== -1) {
@@ -372,23 +398,45 @@ Page({
       
       if (project.status === 'tracking') {
         // 暂停追踪
-        app.pauseTrackingProject(projectId);
+        await app.pauseTrackingProject(projectId);
         project.status = 'paused';
       } else {
         // 开始追踪
-        app.startTrackingProject(projectId, project.name);
+        await app.startTrackingProject(projectId, project.name);
         project.status = 'tracking';
       }
       
       // 保存到全局数据
-      app.globalData.projectList = projectList;
-      wx.setStorageSync('projectList', projectList);
+      await app.saveProjectList(projectList);
       
       // 更新追踪项目列表
       this.updateTrackingData();
       
       wx.showToast({
         title: project.status === 'tracking' ? '开始追踪' : '暂停追踪',
+        icon: 'success'
+      });
+    }
+  },
+
+  // 处理删除项目事件
+  async onDeleteProject(e) {
+    const { projectId } = e.detail;
+    const projectList = app.globalData.projectList;
+    const projectIndex = projectList.findIndex(item => item.id === projectId);
+    
+    if (projectIndex !== -1) {
+      // 从列表中移除项目
+      projectList.splice(projectIndex, 1);
+      
+      // 保存到全局数据
+      await app.saveProjectList(projectList);
+      
+      // 更新本地数据
+      this.setData({ projectList: projectList.filter(item => item.status !== 'finished') });
+      
+      wx.showToast({
+        title: '项目已删除',
         icon: 'success'
       });
     }

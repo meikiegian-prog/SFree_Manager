@@ -1,5 +1,48 @@
-<!-- 数据统计页 - HCI：可视化图表、语音解读 -->
+<!-- 数据统计页 - HCI：可视化图表、语音解读、时间筛选 -->
 <view class="statistics-page">
+  <!-- 时间筛选器 -->
+  <view class="filter-section p-20">
+    <view class="filter-type">
+      <radio-group bindchange="onFilterTypeChange">
+        <label class="filter-option">
+          <radio value="all" checked="{{filterType === 'all'}}"/> 全部
+        </label>
+        <label class="filter-option">
+          <radio value="year" checked="{{filterType === 'year'}}"/> 按年
+        </label>
+        <label class="filter-option">
+          <radio value="month" checked="{{filterType === 'month'}}"/> 按月
+        </label>
+      </radio-group>
+    </view>
+    
+    <!-- 年份选择器 -->
+    <view class="filter-control" wx:if="{{filterType === 'year' || filterType === 'month'}}">
+      <text class="filter-label">选择年份：</text>
+      <picker 
+        range="{{years}}" 
+        value="{{years.indexOf(filterYear)}}" 
+        bindchange="onYearChange"
+        class="filter-picker"
+      >
+        <view class="picker-value">{{filterYear}}年</view>
+      </picker>
+    </view>
+    
+    <!-- 月份选择器 -->
+    <view class="filter-control" wx:if="{{filterType === 'month'}}">
+      <text class="filter-label">选择月份：</text>
+      <picker 
+        range="{{months}}" 
+        value="{{filterMonth - 1}}" 
+        bindchange="onMonthChange"
+        class="filter-picker"
+      >
+        <view class="picker-value">{{filterMonth}}月</view>
+      </picker>
+    </view>
+  </view>
+
   <!-- 切换统计维度 -->
   <view class="tab-bar">
     <button 
@@ -30,8 +73,8 @@
   <!-- 数据汇总 -->
   <view class="data-summary p-30">
     <view class="summary-item">
-      <text class="summary-label">总项目数</text>
-      <text class="summary-value">{{projectList.length}}</text>
+      <text class="summary-label">筛选项目数</text>
+      <text class="summary-value">{{filteredProjectList.length}}</text>
     </view>
     <view class="summary-item">
       <text class="summary-label">总工作时长</text>
@@ -43,20 +86,20 @@
     </view>
   </view>
 
-  <!-- 追踪项目列表 -->
-  <view class="tracking-projects-section" wx:if="{{trackingProjects.length > 0}}">
+  <!-- 已完成项目列表 -->
+  <view class="completed-projects-section" wx:if="{{filteredProjectList.length > 0}}">
     <view class="section-header">
-      <text class="section-title">追踪中的项目</text>
-      <text class="section-subtitle">共{{trackingProjects.length}}个项目正在追踪</text>
+      <text class="section-title">已完成项目</text>
+      <text class="section-subtitle">共{{filteredProjectList.length}}个项目已完成</text>
     </view>
     
-    <view class="tracking-projects-list">
-      <tracking-project-card 
-        wx:for="{{trackingProjects}}" 
+    <view class="completed-projects-list">
+      <project-card 
+        wx:for="{{filteredProjectList}}" 
         wx:key="id"
         project="{{item}}"
-        bind:priorityChange="onPriorityChange"
-        bind:toggleTracking="onToggleTracking"
+        bind:finishProject="handleFinishProject"
+        bind:deleteProject="onDeleteProject"
       />
     </view>
   </view>

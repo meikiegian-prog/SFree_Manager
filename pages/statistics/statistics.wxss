@@ -1,7 +1,56 @@
 /* 数据统计页样式 - HCI：图表占比大、交互清晰 */
 .statistics-page {
-  height: 100vh;
+  min-height: 100vh;
   background: #f5f5f5;
+  overflow-x: hidden; /* 防止水平滚动 */
+}
+
+/* 筛选区域 */
+.filter-section {
+  background: white;
+  margin: 20rpx;
+  border-radius: 20rpx;
+}
+
+.filter-type {
+  margin-bottom: 20rpx;
+}
+
+.filter-option {
+  display: inline-block;
+  margin-right: 30rpx;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.filter-option radio {
+  margin-right: 10rpx;
+}
+
+.filter-control {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15rpx;
+}
+
+.filter-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-right: 20rpx;
+  min-width: 120rpx;
+}
+
+.filter-picker {
+  flex: 1;
+}
+
+.picker-value {
+  background: #f0f0f0;
+  padding: 15rpx 20rpx;
+  border-radius: 10rpx;
+  font-size: 28rpx;
+  color: #333;
+  text-align: center;
 }
 
 /* 切换标签 */
@@ -26,13 +75,16 @@
   border-bottom: 4rpx solid #2E7DFF;
 }
 
-/* 图表容器 */
+/* 图表容器 - 解决漂浮问题，优化定位和尺寸 */
 .chart-container {
-  height: 50vh;
+  position: relative;
+  height: 600rpx; /* 增加高度，为外部标签提供更多显示空间 */
   background: white;
   margin: 20rpx;
   border-radius: 20rpx;
   padding: 20rpx;
+  overflow: hidden; /* 防止内容溢出 */
+  box-sizing: border-box; /* 确保内边距不影响尺寸计算 */
 }
 
 /* 数据汇总 */
@@ -95,9 +147,54 @@
   gap: 20rpx;
 }
 
+/* 已完成项目区域 */
+.completed-projects-section {
+  background: white;
+  margin: 20rpx;
+  border-radius: 20rpx;
+  padding: 30rpx;
+}
+
+.completed-projects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
 /* 响应式设计 */
 @media (max-width: 750rpx) {
-  .tracking-projects-section {
+  .filter-section {
+    margin: 15rpx;
+  }
+  
+  .filter-option {
+    display: block;
+    margin-right: 0;
+    margin-bottom: 15rpx;
+  }
+  
+  .filter-control {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .filter-label {
+    margin-bottom: 10rpx;
+    min-width: auto;
+  }
+  
+  .filter-picker {
+    width: 100%;
+  }
+  
+  /* 图表容器响应式优化 */
+  .chart-container {
+    height: 500rpx; /* 小屏幕下增加高度，确保标签显示完整 */
+    margin: 15rpx;
+    padding: 15rpx;
+  }
+  
+  .completed-projects-section {
     margin: 15rpx;
     padding: 25rpx;
   }

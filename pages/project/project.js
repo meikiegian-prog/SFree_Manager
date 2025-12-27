@@ -162,7 +162,7 @@ Page({
   },
 
   // 保存修改
-  saveProject() {
+  async saveProject() {
     const { projectId, tempProject } = this.data;
     const projectList = app.globalData.projectList;
     const newList = projectList.map(item => {
@@ -173,12 +173,12 @@ Page({
     });
 
     // 保存到全局
-    app.saveProjectList(newList);
+    await app.saveProjectList(newList);
     this.setData({ project: tempProject });
 
     wx.showToast({ title: '修改保存成功！', icon: 'success' });
     // 检查超时状态
-    app.checkProjectTimeout(projectId);
+    await app.checkProjectTimeout(projectId);
   },
 
   // 删除项目
@@ -186,14 +186,14 @@ Page({
     wx.showModal({
       title: '确认删除',
       content: '删除后数据不可恢复，是否确认？',
-      success: (res) => {
+      success: async (res) => {
         if (res.confirm) {
           const { projectId } = this.data;
           const projectList = app.globalData.projectList;
           const newList = projectList.filter(item => item.id !== projectId);
 
           // 保存到全局
-          app.saveProjectList(newList);
+          await app.saveProjectList(newList);
           wx.showToast({ title: '项目已删除', icon: 'success' });
           // 返回上一页
           wx.navigateBack();

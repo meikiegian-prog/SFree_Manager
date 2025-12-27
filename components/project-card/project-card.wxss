@@ -30,3 +30,98 @@
   flex: 1;
   min-width: 200rpx;
 }
+
+/* 未设置完整信息的项目样式 - 红色边框和黄色感叹号 */
+.incomplete-project {
+  border: 4rpx solid #F44336;
+  background: linear-gradient(to right, #FFEBEE, white);
+  position: relative;
+}
+
+/* 黄色三角感叹号 */
+.warning-icon {
+  position: absolute;
+  top: 10rpx;
+  right: 10rpx;
+  width: 40rpx;
+  height: 40rpx;
+  background: #FFC107;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 24rpx;
+  box-shadow: 0 2rpx 6rpx rgba(0,0,0,0.2);
+}
+
+/* 鼠标悬停提示 */
+.warning-tooltip {
+  position: absolute;
+  top: 50rpx;
+  right: 10rpx;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10rpx 20rpx;
+  border-radius: 10rpx;
+  font-size: 24rpx;
+  white-space: nowrap;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.incomplete-project:hover .warning-tooltip {
+  opacity: 1;
+}
+
+/* 删除按钮样式（红色） */
+.btn-danger {
+  background: #dc3545;
+  color: white;
+  border: 1px solid #dc3545;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+
+.delete-btn {
+  background: #dc3545;
+  color: white;
+  border: 1px solid #dc3545;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+
+/* 已完成项目样式 */
+.finished-project {
+  border: 2px solid #4CAF50;
+  position: relative;
+}
+
+/* 已完成标记 */
+.finished-badge {
+  position: absolute;
+  top: 10rpx;
+  right: 10rpx;
+  background: #4CAF50;
+  color: white;
+  padding: 4rpx 12rpx;
+  border-radius: 20rpx;
+  font-size: 20rpx;
+  font-weight: bold;
+  z-index: 10;
+}
+
+/* 已完成项目的按钮样式调整 */
+.finished-project .card-actions button {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.finished-project .delete-btn {
+  opacity: 1;
+  pointer-events: auto;
+}

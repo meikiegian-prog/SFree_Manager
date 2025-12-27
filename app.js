@@ -26,44 +26,92 @@ App({
     return `${h}:${m}:${s}`;
   },
 
-  // 保存项目列表到本地缓存
-  saveProjectList(list) {
-    this.globalData.projectList = list;
-    wx.setStorageSync('projectList', list);
+  // 保存项目列表到本地缓存（异步版本）
+  async saveProjectList(list) {
+    return new Promise((resolve, reject) => {
+      try {
+        this.globalData.projectList = list;
+        wx.setStorage({
+          key: 'projectList',
+          data: list,
+          success: () => {
+            console.log('项目列表保存成功');
+            resolve(list);
+          },
+          fail: (err) => {
+            console.error('项目列表保存失败:', err);
+            reject(err);
+          }
+        });
+      } catch (error) {
+        console.error('保存项目列表时发生错误:', error);
+        reject(error);
+      }
+    });
   },
 
-  // 检查项目是否超时（增强版：渐变红色+温和震动）
-  checkProjectTimeout(projectId) {
+  // 检查项目是否超时（增强版：渐变红色+温和震动+自动停止追踪+恢复逻辑）
+  async checkProjectTimeout(projectId) {
     const projectList = this.globalData.projectList;
     const targetProject = projectList.find(item => item.id === projectId);
     if (targetProject) {
       const isTimeout = targetProject.totalTime > 3600 || (targetProject.deadline && new Date(targetProject.deadline) < new Date());
+      
       if (isTimeout && targetProject.status !== 'timeout') {
+        // 项目超时，设置状态为timeout
         targetProject.status = 'timeout';
-        this.saveProjectList(projectList);
+        await this.saveProjectList(projectList);
+        
+        // 如果项目正在追踪，自动停止追踪
+        const isTracking = this.globalData.timerData.trackingProjects.some(
+          item => item.projectId === projectId
+        );
+        if (isTracking) {
+          await this.pauseTrackingProject(projectId);
+        }
         
         // 温和震动提醒（200Hz，1秒）
         wx.vibrateShort({ type: 'light' });
         
         // 无刺眼弹窗，使用toast提示
         wx.showToast({
-          title: `【${targetProject.name}】进度超时！`,
+          title: `【${targetProject.name}】进度超时，已自动停止追踪！`,
           icon: 'none',
           duration: 2000
         });
         
-        console.log('项目超时提醒：渐变红色效果已应用');
+        console.log('项目超时提醒：渐变红色效果已应用，自动停止追踪');
+      } else if (!isTimeout && targetProject.status === 'timeout') {
+        // 项目不再超时，恢复状态为doing
+        targetProject.status = 'doing';
+        await this.saveProjectList(projectList);
+        
+        console.log('项目超时恢复：状态已恢复为进行中');
       }
     }
   },
 
   // 完成任务成就系统
-  completeProjectAchievement(projectId) {
+  async completeProjectAchievement(projectId) {
     const projectList = this.globalData.projectList;
     const targetProject = projectList.find(item => item.id === projectId);
     if (targetProject && targetProject.status !== 'finished') {
-      targetProject.status = 'finished';
-      this.saveProjectList(projectList);
+      // 如果项目正在追踪，先停止追踪
+      const isTracking = this.globalData.timerData.trackingProjects.some(
+        item => item.projectId === projectId
+      );
+      if (isTracking) {
+        await this.pauseTrackingProject(projectId, false); // 传递false参数，不自动设置状态
+        // 确保项目状态正确设置为完成
+        targetProject.status = 'finished';
+      } else {
+        // 项目不在追踪中，直接设置为完成状态
+        targetProject.status = 'finished';
+      }
+      
+      // 记录完成时间
+      targetProject.finishTime = new Date().toISOString().slice(0, 16).replace('T', ' ');
+      await this.saveProjectList(projectList);
       
       // 弹出卡通风格成就勋章
       wx.showModal({
@@ -171,7 +219,7 @@ App({
     });
   },
 
-    onLaunch() {
+    async onLaunch() {
       // 初始化本地缓存
       if (!wx.getStorageSync('projectList')) {
         // 如果没有项目数据，创建一些测试数据
@@ -195,8 +243,7 @@ App({
             createTime: new Date().toISOString().slice(0, 16).replace('T', ' ') // 精确到分钟：YYYY-MM-DD HH:mm
           }
         ];
-        wx.setStorageSync('projectList', testData);
-        this.globalData.projectList = testData;
+        await this.saveProjectList(testData);
       } else {
         this.globalData.projectList = wx.getStorageSync('projectList');
       }
@@ -220,7 +267,7 @@ App({
   },
 
   // 开始追踪项目（支持多项目同时追踪）
-  startTrackingProject(projectId, projectName) {
+  async startTrackingProject(projectId, projectName) {
     const trackingProject = {
       projectId,
       projectName,
@@ -247,7 +294,7 @@ App({
     const projectIndex = projectList.findIndex(item => item.id === projectId);
     if (projectIndex !== -1) {
       projectList[projectIndex].status = 'tracking';
-      this.saveProjectList(projectList);
+      await this.saveProjectList(projectList);
     }
     
     // 启动计时器（如果未启动）
@@ -259,7 +306,7 @@ App({
   },
 
   // 暂停追踪项目
-  pauseTrackingProject(projectId) {
+  async pauseTrackingProject(projectId, autoSetStatus = true) {
     const trackingProjects = this.globalData.timerData.trackingProjects;
     const projectIndex = trackingProjects.findIndex(item => item.projectId === projectId);
     
@@ -272,8 +319,11 @@ App({
       const targetProject = projectList.find(item => item.id === projectId);
       if (targetProject) {
         targetProject.totalTime += elapsedTime;
-        targetProject.status = 'paused'; // 更新状态为暂停
-        this.saveProjectList(projectList);
+        // 只有当autoSetStatus为true时才自动设置状态为暂停
+        if (autoSetStatus) {
+          targetProject.status = 'paused'; // 更新状态为暂停
+        }
+        await this.saveProjectList(projectList);
       }
       
       // 从追踪列表中移除
@@ -327,40 +377,124 @@ App({
         suggestedIncome: 0
       };
       
-      // 增强时间识别模式 - 更准确的时间转换
+      // 增强时间识别模式 - 支持更多时间范围和更灵活的表达
       const timePatterns = [
+        // 具体日期格式：YYYY-MM-DD HH:mm
+        { pattern: /(\d{4})[-年](\d{1,2})[-月](\d{1,2})[日]?\s*(\d{1,2})?:?(\d{0,2})?/, 
+          calculate: (matches) => {
+            const date = new Date();
+            let year = date.getFullYear();
+            let month = 1;
+            let day = 1;
+            let hours = 9;
+            let minutes = 0;
+            
+            if (matches[1]) year = parseInt(matches[1]);
+            if (matches[2]) month = parseInt(matches[2]) - 1; // 月份从0开始
+            if (matches[3]) day = parseInt(matches[3]);
+            if (matches[4]) hours = parseInt(matches[4]);
+            if (matches[5]) minutes = parseInt(matches[5]);
+            
+            date.setFullYear(year, month, day);
+            date.setHours(hours, minutes, 0, 0);
+            
+            const yearStr = String(date.getFullYear());
+            const monthStr = String(date.getMonth() + 1).padStart(2, '0');
+            const dayStr = String(date.getDate()).padStart(2, '0');
+            const hourStr = String(hours).padStart(2, '0');
+            const minuteStr = String(minutes).padStart(2, '0');
+            
+            return `${yearStr}-${monthStr}-${dayStr} ${hourStr}:${minuteStr}`;
+          }
+        },
+        
+        // 明年、后年等相对年份
+        { pattern: /(明年|后年|大后年)\s*(\d{1,2})月(\d{1,2})日?\s*(\d{1,2})?:?(\d{0,2})?/, 
+          calculate: (matches) => {
+            const date = new Date();
+            let yearOffset = 0;
+            
+            if (matches[1] === '明年') yearOffset = 1;
+            else if (matches[1] === '后年') yearOffset = 2;
+            else if (matches[1] === '大后年') yearOffset = 3;
+            
+            let month = 1;
+            let day = 1;
+            let hours = 9;
+            let minutes = 0;
+            
+            if (matches[2]) month = parseInt(matches[2]) - 1;
+            if (matches[3]) day = parseInt(matches[3]);
+            if (matches[4]) hours = parseInt(matches[4]);
+            if (matches[5]) minutes = parseInt(matches[5]);
+            
+            date.setFullYear(date.getFullYear() + yearOffset, month, day);
+            date.setHours(hours, minutes, 0, 0);
+            
+            const yearStr = String(date.getFullYear());
+            const monthStr = String(date.getMonth() + 1).padStart(2, '0');
+            const dayStr = String(date.getDate()).padStart(2, '0');
+            const hourStr = String(hours).padStart(2, '0');
+            const minuteStr = String(minutes).padStart(2, '0');
+            
+            return `${yearStr}-${monthStr}-${dayStr} ${hourStr}:${minuteStr}`;
+          }
+        },
+        
+        // 月份日期格式：MM月DD日 HH:mm
+        { pattern: /(\d{1,2})月(\d{1,2})日?\s*(\d{1,2})?:?(\d{0,2})?/, 
+          calculate: (matches) => {
+            const date = new Date();
+            let month = 1;
+            let day = 1;
+            let hours = 9;
+            let minutes = 0;
+            
+            if (matches[1]) month = parseInt(matches[1]) - 1;
+            if (matches[2]) day = parseInt(matches[2]);
+            if (matches[3]) hours = parseInt(matches[3]);
+            if (matches[4]) minutes = parseInt(matches[4]);
+            
+            // 如果日期已经过去，设置为明年
+            date.setMonth(month, day);
+            if (date < new Date()) {
+              date.setFullYear(date.getFullYear() + 1);
+            }
+            
+            date.setHours(hours, minutes, 0, 0);
+            
+            const yearStr = String(date.getFullYear());
+            const monthStr = String(date.getMonth() + 1).padStart(2, '0');
+            const dayStr = String(date.getDate()).padStart(2, '0');
+            const hourStr = String(hours).padStart(2, '0');
+            const minuteStr = String(minutes).padStart(2, '0');
+            
+            return `${yearStr}-${monthStr}-${dayStr} ${hourStr}:${minuteStr}`;
+          }
+        },
+        
         // 明天上午/下午 + 时间（更精确的上午/下午处理）
         { pattern: /明天\s*(上午|下午)?\s*(\d{1,2})[点:](\d{0,2})/, 
           calculate: (matches) => {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             
-            // 确保分组正确
             let period = '';
             let hours = 0;
             let minutes = 0;
             
-            // 根据匹配结果解析
-            if (matches[1]) period = matches[1]; // 上午/下午
-            if (matches[2]) hours = parseInt(matches[2]); // 小时
-            if (matches[3]) minutes = parseInt(matches[3]); // 分钟
+            if (matches[1]) period = matches[1];
+            if (matches[2]) hours = parseInt(matches[2]);
+            if (matches[3]) minutes = parseInt(matches[3]);
             
-            // 更准确的上午/下午处理
             if (period === '下午') {
-              if (hours < 12) {
-                hours += 12; // 下午1-11点 -> 13-23点
-              }
-              // 下午12点保持12点
-            } else if (period === '上午') {
-              if (hours === 12) {
-                hours = 0; // 上午12点 -> 0点
-              }
-              // 上午1-11点保持不变
+              if (hours < 12) hours += 12;
+            } else if (period === '上午' && hours === 12) {
+              hours = 0;
             }
             
             tomorrow.setHours(hours, minutes, 0, 0);
             
-            // 使用本地时间格式，避免时区问题
             const year = tomorrow.getFullYear();
             const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
             const day = String(tomorrow.getDate()).padStart(2, '0');
@@ -370,6 +504,7 @@ App({
             return `${year}-${month}-${day} ${hourStr}:${minuteStr}`;
           }
         },
+        
         // 后天上午/下午 + 时间
         { pattern: /后天\s*(上午|下午)?\s*(\d{1,2})[点:](\d{0,2})/, 
           calculate: (matches) => {
@@ -398,6 +533,7 @@ App({
             return `${year}-${month}-${day} ${hourStr}:${minuteStr}`;
           }
         },
+        
         // 大后天 + 时间
         { pattern: /大后天\s*(\d{1,2})[点:](\d{0,2})/, 
           calculate: (matches) => {
@@ -421,6 +557,7 @@ App({
             return `${year}-${month}-${day} ${hourStr}:${minuteStr}`;
           }
         },
+        
         // 今天 + 时间
         { pattern: /今天\s*(\d{1,2})[点:](\d{0,2})/, 
           calculate: (matches) => {
@@ -443,8 +580,9 @@ App({
             return `${year}-${month}-${day} ${hourStr}:${minuteStr}`;
           }
         },
-        // 单独的时间（默认今天）
-        { pattern: /(\d{1,2})[点:](\d{0,2})/, 
+        
+        // 单独的时间（默认今天）- 要求明确的时间标识符，避免纯数字匹配
+        { pattern: /(\d{1,2})[点:：](\d{0,2})/, 
           calculate: (matches) => {
             const today = new Date();
             
@@ -453,6 +591,11 @@ App({
             
             if (matches[1]) hours = parseInt(matches[1]);
             if (matches[2]) minutes = parseInt(matches[2]);
+            
+            // 验证时间合理性
+            if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+              return ''; // 返回空字符串表示无效时间
+            }
             
             today.setHours(hours, minutes, 0, 0);
             
@@ -465,6 +608,7 @@ App({
             return `${year}-${month}-${day} ${hourStr}:${minuteStr}`;
           }
         },
+        
         // 支持更多时间表达方式
         { pattern: /(上午|下午)\s*(\d{1,2})[点:](\d{0,2})/, 
           calculate: (matches) => {
@@ -494,12 +638,17 @@ App({
         }
       ];
     
-    // 应用时间识别
+    // 应用时间识别（按优先级顺序）
     for (const timePattern of timePatterns) {
       const matches = text.match(timePattern.pattern);
       if (matches) {
-        result.deadline = timePattern.calculate(matches);
-        break;
+        try {
+          result.deadline = timePattern.calculate(matches);
+          break;
+        } catch (error) {
+          console.warn('时间解析失败:', error);
+          // 继续尝试其他模式
+        }
       }
     }
     

@@ -1,5 +1,13 @@
 <!-- 项目卡片组件 - 核心HCI：大尺寸按钮、渐变提醒 -->
-<view class="project-card" style="background: {{project.status === 'timeout' ? 'linear-gradient(to right, #ffebee, #f44336)' : 'white'}};">
+<view class="project-card {{(!project.deadline || !project.income) ? 'incomplete-project' : ''}} {{project.status === 'finished' ? 'finished-project' : ''}}" style="background: {{project.status === 'timeout' ? 'linear-gradient(to right, #ffebee, #f44336)' : (project.status === 'finished' ? 'linear-gradient(to right, #e8f5e8, #4CAF50)' : 'white')}};">
+  <!-- 黄色三角感叹号（仅当项目信息不完整时显示） -->
+  <view class="warning-icon" wx:if="{{!project.deadline || !project.income}}">!</view>
+  <!-- 悬停提示 -->
+  <view class="warning-tooltip" wx:if="{{!project.deadline || !project.income}}">请设置项目信息</view>
+  
+  <!-- 已完成标记 -->
+  <view class="finished-badge" wx:if="{{project.status === 'finished'}}">已完成</view>
+  
   <!-- 项目名称 -->
   <view class="card-title">{{project.name}}</view>
   
@@ -17,8 +25,19 @@
       class="btn btn-primary timer-btn" 
       bindtap="toggleTimer"
       data-projectid="{{project.id}}"
+      wx:if="{{project.status !== 'timeout' && project.status !== 'finished'}}"
     >
       {{isProjectTracking ? '暂停追踪' : '开始追踪'}}
+    </button>
+    
+    <!-- 删除项目按钮（仅超时时显示） -->
+    <button 
+      class="btn btn-danger delete-btn" 
+      bindtap="deleteProject"
+      data-projectid="{{project.id}}"
+      wx:if="{{project.status === 'timeout'}}"
+    >
+      删除项目
     </button>
     
     <!-- 标记完成按钮 -->
@@ -26,7 +45,7 @@
       class="btn btn-secondary finish-btn" 
       bindtap="finishProject"
       data-projectid="{{project.id}}"
-      wx:if="{{project.status !== 'finished'}}"
+      wx:if="{{project.status !== 'finished' && project.status !== 'timeout'}}"
     >
       标记完成
     </button>
@@ -36,6 +55,7 @@
       class="btn btn-warning detail-btn" 
       bindtap="goToDetail"
       data-projectid="{{project.id}}"
+      wx:if="{{project.status !== 'finished'}}"
     >
       详情
     </button>

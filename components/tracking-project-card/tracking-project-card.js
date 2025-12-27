@@ -8,12 +8,14 @@ Component({
       type: Object,
       value: {},
       observer: function(newVal) {
-        // 当项目数据更新时，重新计算剩余时间、颜色和格式化时间
+        // 当项目数据更新时，重新计算剩余时间和颜色
         if (newVal) {
-          // 计算格式化时间
-          const formattedTotalTime = newVal.totalTime ? this.formatTime(newVal.totalTime) : '00:00:00';
-          this.setData({ formattedTotalTime });
+          // 如果项目已完成，不执行任何操作
+          if (newVal.status === 'finished') {
+            return;
+          }
           
+          // 累计时间由计时器统一更新，避免闪烁
           if (newVal.deadline) {
             this.calculateRemainingTime();
             this.updateCardStyle();
@@ -68,6 +70,15 @@ Component({
       const { project } = this.data;
       if (!project) return;
       
+      // 如果项目已完成，停止计时器
+      if (project.status === 'finished') {
+        if (this.data.timer) {
+          clearInterval(this.data.timer);
+          this.setData({ timer: null });
+        }
+        return;
+      }
+      
       // 检查当前项目是否正在追踪
       const isTracking = app.globalData.timerData.trackingProjects.some(
         item => item.projectId === project.id
@@ -78,9 +89,9 @@ Component({
         const totalTime = (project.totalTime || 0) + 1;
         const formattedTotalTime = this.formatTime(totalTime);
         
+        // 只更新本地显示数据，不修改project对象
         this.setData({
-          formattedTotalTime,
-          'project.totalTime': totalTime
+          formattedTotalTime
         });
         
         // 通知父组件累计时长已更新

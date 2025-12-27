@@ -8,11 +8,18 @@ Component({
       type: Object,
       value: {},
       observer: function(newVal) {
-        // 当project数据更新时，计算格式化时间
-        if (newVal && newVal.totalTime !== undefined) {
-          const formattedTime = this.formatTime(newVal.totalTime);
+        // 当project数据更新时，更新组件内部数据
+        if (newVal) {
+          // 更新格式化时间
+          if (newVal.totalTime !== undefined) {
+            const formattedTime = this.formatTime(newVal.totalTime);
+            this.setData({
+              formattedTotalTime: formattedTime
+            });
+          }
+          // 更新项目数据，确保使用最新的项目信息
           this.setData({
-            formattedTotalTime: formattedTime
+            project: newVal
           });
         }
       }
@@ -45,6 +52,20 @@ Component({
     // 一键开始/暂停计时
     toggleTimer(e) {
       const projectId = e.currentTarget.dataset.projectid;
+      const { project } = this.data;
+      
+      // 检查项目是否设置了截止日期和预计收入
+      if (!project.deadline || !project.income) {
+        // 显示提示信息并振动
+        wx.vibrateShort({ type: 'light' });
+        wx.showToast({
+          title: '请设置项目信息',
+          icon: 'none',
+          duration: 2000
+        });
+        return;
+      }
+      
       // 向父组件传递事件
       this.triggerEvent('toggleTimer', { projectId });
     },
@@ -53,6 +74,20 @@ Component({
     finishProject(e) {
       const projectId = e.currentTarget.dataset.projectid;
       this.triggerEvent('finishProject', { projectId });
+    },
+
+    // 删除项目
+    deleteProject(e) {
+      const projectId = e.currentTarget.dataset.projectid;
+      wx.showModal({
+        title: '确认删除',
+        content: '删除后数据不可恢复，是否确认？',
+        success: (res) => {
+          if (res.confirm) {
+            this.triggerEvent('deleteProject', { projectId });
+          }
+        }
+      });
     },
 
     // 跳转到项目详情页

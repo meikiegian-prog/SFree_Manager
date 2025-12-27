@@ -29,6 +29,7 @@
               trackingProjects="{{trackingProjects}}"
               bind:toggleTimer="handleToggleTimer"
               bind:finishProject="handleFinishProject"
+              bind:deleteProject="onDeleteProject"
             />
           </block>
           
