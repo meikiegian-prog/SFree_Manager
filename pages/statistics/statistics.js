@@ -18,11 +18,18 @@ Page({
     filterYear: new Date().getFullYear(), // 当前年份
     filterMonth: new Date().getMonth() + 1, // 当前月份
     years: [], // 可选的年份列表
-    months: Array.from({length: 12}, (_, i) => i + 1) // 1-12月
+    months: Array.from({length: 12}, (_, i) => i + 1), // 1-12月
+    isManageMode: false // 管理模式状态
   },
 
   onLoad() {
     this.initYears();
+    this.initData();
+    this.initChart();
+  },
+
+  onShow() {
+    // 确保每次页面显示时都重新加载数据，保持数据同步
     this.initData();
     this.initChart();
   },
@@ -39,8 +46,27 @@ Page({
 
     // 初始化数据
     initData() {
+      // 强制重新从存储读取数据，确保数据同步
+      const storedProjectList = wx.getStorageSync('projectList') || [];
+      app.globalData.projectList = storedProjectList;
+      
       const projectList = app.globalData.projectList;
-      console.log('项目列表数据:', projectList);
+      console.log('=== 统计页面数据初始化开始 ===');
+      console.log('从存储读取的项目列表:', storedProjectList);
+      console.log('全局项目列表:', projectList);
+      console.log('项目总数:', projectList.length);
+      
+      // 详细检查每个项目的状态
+      console.log('=== 项目状态详情 ===');
+      projectList.forEach((item, index) => {
+        console.log(`项目${index + 1}:`, item.name, '状态:', item.status, 'ID:', item.id, '完成时间:', item.finishTime);
+      });
+      
+      // 特别检查已完成项目的数量
+      const finishedProjects = projectList.filter(item => item.status === 'finished');
+      console.log('=== 已完成项目统计 ===');
+      console.log('已完成项目数量:', finishedProjects.length);
+      console.log('已完成项目详情:', finishedProjects);
       
       // 获取追踪中的项目（状态为tracking的项目）
       const trackingProjects = projectList.filter(item => item.status === 'tracking');
@@ -49,6 +75,9 @@ Page({
       const filteredProjectList = projectList.filter(item => 
         item.status === 'finished'
       );
+      
+      console.log('已完成项目列表:', filteredProjectList);
+      console.log('已完成项目数量:', filteredProjectList.length);
       
       // 根据筛选条件进一步过滤
       const finalFilteredList = this.applyTimeFilter(filteredProjectList);
@@ -61,6 +90,7 @@ Page({
       console.log('总收入:', totalIncome);
       console.log('追踪中的项目:', trackingProjects);
       console.log('筛选后的项目:', finalFilteredList);
+      console.log('最终显示项目数量:', finalFilteredList.length);
       
       // 详细检查收入数据
       console.log('收入数据详情:');
@@ -76,6 +106,8 @@ Page({
         totalIncome,
         formattedTotalTime
       });
+      
+      console.log('=== 统计页面数据初始化完成 ===');
     },
 
   // 应用时间筛选
@@ -96,9 +128,21 @@ Page({
         return false;
       }
       
+      // 使用更可靠的日期解析方法，支持ISO格式
       const projectDate = new Date(timeField);
-      const projectYear = projectDate.getFullYear();
-      const projectMonth = projectDate.getMonth() + 1;
+      let projectYear, projectMonth;
+      
+      // 检查日期是否有效
+      if (isNaN(projectDate.getTime())) {
+        console.log('日期解析失败，使用当前日期:', timeField);
+        // 如果日期解析失败，使用当前日期
+        const currentDate = new Date();
+        projectYear = currentDate.getFullYear();
+        projectMonth = currentDate.getMonth() + 1;
+      } else {
+        projectYear = projectDate.getFullYear();
+        projectMonth = projectDate.getMonth() + 1;
+      }
       
       console.log('项目时间信息:', project.name, '时间字段:', timeField, '项目年:', projectYear, '项目月:', projectMonth);
       
@@ -148,154 +192,169 @@ Page({
     });
   },
 
-  // 切换统计维度
-  switchTab(e) {
-    const type = e.currentTarget.dataset.type;
-    
-    // 先清除图表实例，确保重新初始化
-    this.setData({ 
-      activeTab: type,
-      ec: { onInit: null }  // 清除图表实例
-    }, () => {
-      // 延迟一小段时间再重新初始化图表
-      setTimeout(() => {
-        this.initChart();
-      }, 100);
-    });
-  },
+			  // 切换统计维度 - 强制重新编译测试
+			  switchTab(e) {
+			    const type = e.currentTarget.dataset.type;
+			    console.log('=== 切换统计维度开始 ===', type);
+			    
+			    // 直接设置activeTab并重新初始化图表
+			    this.setData({ 
+			      activeTab: type
+			    }, () => {
+			      console.log('=== activeTab已设置为 ===:', this.data.activeTab);
+			      // 直接重新初始化图表，不使用延迟
+			      this.initChart();
+			    });
+			  },
 
-    // 初始化ECharts图表
-    initChart() {
-      const { activeTab, filteredProjectList } = this.data;
-      const validProjects = filteredProjectList.filter(item => 
-        activeTab === 'time' ? item.totalTime > 0 : (item.income || 0) > 0
-      );
+		    // 初始化ECharts图表
+		    initChart() {
+		      const { activeTab, filteredProjectList } = this.data;
+		      console.log('=== initChart开始执行 === 当前activeTab:', activeTab);
+		      
+		      // 确保activeTab的值不会被重置
+		      const currentActiveTab = activeTab;
+		      
+		      const validProjects = filteredProjectList.filter(item => 
+		        currentActiveTab === 'time' ? item.totalTime > 0 : (item.income || 0) > 0
+		      );
 
-      console.log('当前统计维度:', activeTab);
-      console.log('有效项目数量:', validProjects.length);
-      console.log('有效项目数据:', validProjects);
+		      console.log('当前统计维度:', currentActiveTab);
+		      console.log('有效项目数量:', validProjects.length);
+		      console.log('有效项目数据:', validProjects);
 
-      // 计算总时间或总收入用于占比计算
-      const totalValue = activeTab === 'time' 
-        ? validProjects.reduce((sum, item) => sum + (item.totalTime || 0), 0) // 总时间（秒）
-        : validProjects.reduce((sum, item) => sum + (item.income || 0), 0); // 总收入
+		      // 计算总时间或总收入用于占比计算
+		      const totalValue = currentActiveTab === 'time' 
+		        ? validProjects.reduce((sum, item) => sum + (item.totalTime || 0), 0) // 总时间（秒）
+		        : validProjects.reduce((sum, item) => sum + (item.income || 0), 0); // 总收入
 
-      console.log('总数值:', totalValue);
-      console.log('activeTab:', activeTab);
+		      console.log('总数值:', totalValue);
+		      console.log('activeTab:', currentActiveTab);
 
-      const xData = validProjects.map(item => item.name);
-      const yData = activeTab === 'time' 
-        ? validProjects.map(item => totalValue > 0 ? (item.totalTime / totalValue) * 100 : 0) // 时间占比：百分比（数值类型）
-        : validProjects.map(item => totalValue > 0 ? (item.income / totalValue) * 100 : 0); // 收入占比：百分比（数值类型）
+		      const xData = validProjects.map(item => item.name);
+		      const yData = currentActiveTab === 'time' 
+		        ? validProjects.map(item => totalValue > 0 ? (item.totalTime / totalValue) * 100 : 0) // 时间占比：百分比（数值类型）
+		        : validProjects.map(item => totalValue > 0 ? (item.income / totalValue) * 100 : 0); // 收入占比：百分比（数值类型）
 
-      console.log('xData:', xData);
-      console.log('yData:', yData);
+		      console.log('xData:', xData);
+		      console.log('yData:', yData);
 
-      const option = {
-        title: {
-          text: this.getChartTitle(activeTab),
-          left: 'center',
-          textStyle: { fontSize: 32 }
-        },
-        tooltip: {
-          trigger: 'click',
-          formatter: (params) => {
-            const timeText = this.getTimeRangeText();
-            const percentage = params.value;
-            const absoluteValue = activeTab === 'time' 
-              ? app.formatTime((percentage / 100) * totalValue)
-              : (percentage / 100 * totalValue).toFixed(2);
-            const unit = activeTab === 'time' ? '' : '元';
-            return `${timeText}${params.name}：${absoluteValue}${unit}（占比${percentage}%）`;
-          },
-          textStyle: { fontSize: 28 }
-        },
-        series: [
-          {
-            name: activeTab === 'time' ? '耗时占比' : '收入占比',
-            type: 'pie',
-            radius: ['35%', '60%'], // 减小半径，为外部标签提供更多空间
-            data: xData.map((name, index) => ({
-              value: yData[index],
-              name: name
-            })),
-            color: ['#2E7DFF', '#4CAF50', '#FF9800', '#9C27B0', '#FFCDD2', '#607D8B'],
-            emphasis: {
-              itemStyle: {
-                shadowBlur: 10,
-                shadowOffsetX: 0,
-                shadowColor: 'rgba(0, 0, 0, 0.5)'
-              }
-            },
-            label: {
-              fontSize: 20,
-              formatter: function(params) {
-                // 限制项目名称长度，防止文字过长
-                const name = params.name.length > 6 ? params.name.substring(0, 6) + '...' : params.name;
-                return `${name}\n${params.percent}%`;
-              },
-              position: 'outside',
-              alignTo: 'labelLine',
-              bleedMargin: 5,
-              distanceToLabelLine: 5,
-              textBorderColor: 'transparent'
-            },
-            labelLine: {
-              length: 15,
-              length2: 10,
-              smooth: true
-            }
-          }
-        ]
-      };
+	      const option = {
+	        title: {
+	          text: this.getChartTitle(currentActiveTab),
+	          left: 'center',
+	          textStyle: { fontSize: 32 }
+	        },
+	        tooltip: {
+	          trigger: 'click',
+	          formatter: (params) => {
+	            const percentage = params.value.toFixed(1); // 精确到小数点后1位
+	            
+	            // 时间模式：显示整数时间，收入模式：显示带小数的收入
+	            const absoluteValue = currentActiveTab === 'time' 
+	              ? app.formatTime(Math.round((percentage / 100) * totalValue)) // 时间取整
+	              : (percentage / 100 * totalValue).toFixed(1) + '元';
+	            
+	            // 项目名加粗，后面跟冒号
+	            return `<b>${params.name}：</b>${absoluteValue}（占比${percentage}%）`;
+	          },
+	          textStyle: { fontSize: 28 }
+	        },
+	        series: [
+	          {
+	            name: currentActiveTab === 'time' ? '耗时占比' : '收入占比',
+	            type: 'pie',
+	            radius: ['35%', '60%'], // 减小半径，为外部标签提供更多空间
+	            data: xData.map((name, index) => ({
+	              value: yData[index],
+	              name: name
+	            })),
+	            color: ['#2E7DFF', '#4CAF50', '#FF9800', '#9C27B0', '#FFCDD2', '#607D8B'],
+	            emphasis: {
+	              itemStyle: {
+	                shadowBlur: 10,
+	                shadowOffsetX: 0,
+	                shadowColor: 'rgba(0, 0, 0, 0.5)'
+	              }
+	            },
+	            label: {
+	              fontSize: 20,
+	              formatter: function(params) {
+	                // 限制项目名称长度，防止文字过长
+	                const name = params.name.length > 6 ? params.name.substring(0, 6) + '...' : params.name;
+	                return `${name}\n${params.percent}%`;
+	              },
+	              position: 'outside',
+	              alignTo: 'labelLine',
+	              bleedMargin: 5,
+	              distanceToLabelLine: 5,
+	              textBorderColor: 'transparent'
+	            },
+	            labelLine: {
+	              length: 15,
+	              length2: 10,
+	              smooth: true
+	            }
+	          }
+	        ]
+	      };
 
-      // 如果图表实例已存在，使用setOption更新；否则重新初始化
-      if (this.chartInstance) {
-        console.log('使用setOption更新图表');
-        this.chartInstance.setOption(option);
-      } else {
-        console.log('重新初始化图表');
-        this.setData({
-          ec: {
-            onInit: (canvas, width, height) => {
-              const chart = echarts.init(canvas, null, {
-                width: width,
-                height: height
-              });
-              canvas.setChart(chart);
-              chart.setOption(option);
+	      // 如果图表实例已存在，使用setOption更新；否则重新初始化
+	      if (this.chartInstance) {
+	        console.log('使用setOption更新图表');
+	        this.chartInstance.setOption(option);
+	      } else {
+	        console.log('重新初始化图表');
+	        this.setData({
+	          ec: {
+	            onInit: (canvas, width, height) => {
+	              const chart = echarts.init(canvas, null, {
+	                width: width,
+	                height: height
+	              });
+	              canvas.setChart(chart);
+	              chart.setOption(option);
 
-              // 保存图表实例引用
-              this.chartInstance = chart;
+	              // 保存图表实例引用
+	              this.chartInstance = chart;
 
-              // 增强数据可视化：添加语音解读功能
-              chart.on('click', (params) => {
-                const timeText = this.getTimeRangeText();
-                const percentage = params.value;
-                const absoluteValue = activeTab === 'time' 
-                  ? app.formatTime((percentage / 100) * totalValue)
-                  : (percentage / 100 * totalValue).toFixed(2);
-                const text = `${timeText}${params.name}${activeTab === 'time' ? '耗时' : '收入'}${absoluteValue}${activeTab === 'time' ? '' : '元'}（占比${percentage}%）`;
-                
-                // 显示弹窗反馈
-                wx.showToast({ title: text, icon: 'none' });
-                
-                // 语音解读功能（如果用户授权了录音权限）
-                if (wx.getStorageSync('voiceEnabled')) {
-                  const speechText = `${timeText}${params.name}${activeTab === 'time' ? '项目耗时' : '项目收入'}${absoluteValue}${activeTab === 'time' ? '' : '元'}（占比${percentage}%）`;
-                  
-                  // 使用微信语音合成API
-                  wx.createInnerAudioContext().play();
-                  // 实际项目中可以接入百度语音API进行更自然的语音播报
-                  console.log('语音解读:', speechText);
-                }
-              });
+	              // 增强数据可视化：添加语音解读功能
+	              chart.on('click', (params) => {
+	                console.log('图表点击事件触发，当前统计维度:', currentActiveTab);
+	                console.log('点击的项目数据:', params);
+	                console.log('总数值:', totalValue);
+	                console.log('有效项目数据:', validProjects);
+	                
+	                const percentage = params.value.toFixed(1); // 精确到小数点后1位
+	                
+	                // 时间模式：显示整数时间，收入模式：显示带小数的收入
+	                const absoluteValue = currentActiveTab === 'time' 
+	                  ? app.formatTime(Math.round((percentage / 100) * totalValue)) // 时间取整
+	                  : (percentage / 100 * totalValue).toFixed(1) + '元';
+	                const text = `${params.name}：${absoluteValue}（占比${percentage}%）`;
+	                
+	                console.log('弹窗显示内容:', text);
+	                console.log('计算详情 - 百分比:', percentage, '总数值:', totalValue, '绝对数值:', absoluteValue);
+	                
+	                // 显示弹窗反馈
+	                wx.showToast({ title: text, icon: 'none' });
+	                
+	                // 语音解读功能（如果用户授权了录音权限）
+	                if (wx.getStorageSync('voiceEnabled')) {
+	                  const speechText = `${params.name}：${absoluteValue}（占比${percentage}%）`;
+	                  
+	                  // 使用微信语音合成API
+	                  wx.createInnerAudioContext().play();
+	                  // 实际项目中可以接入百度语音API进行更自然的语音播报
+	                  console.log('语音解读:', speechText);
+	                }
+	              });
 
-              return chart;
-            }
-          }
-        });
-      }
+	              return chart;
+	            }
+	          }
+	        });
+	      }
   },
   // 处理优先级更改事件
   async onPriorityChange(e) {
@@ -382,29 +441,34 @@ Page({
     });
   },
 
-  // 处理删除项目事件
-  async onDeleteProject(e) {
-    const { projectId } = e.detail;
-    const projectList = app.globalData.projectList; // 使用完整的项目列表，而不是筛选后的列表
-    const projectIndex = projectList.findIndex(item => item.id === projectId);
-    
-    if (projectIndex !== -1) {
-      // 从列表中移除项目
-      projectList.splice(projectIndex, 1);
-      
-      // 保存到全局数据
-      await app.saveProjectList(projectList);
-      
-      // 重新初始化数据
-      this.initData();
-      this.initChart();
-      
-      wx.showToast({
-        title: '项目已删除',
-        icon: 'success'
-      });
-    }
-  },
+	  // 处理删除项目事件
+	  async onDeleteProject(e) {
+	    const { projectId } = e.detail;
+	    const projectList = app.globalData.projectList; // 使用完整的项目列表，而不是筛选后的列表
+	    const projectIndex = projectList.findIndex(item => item.id === projectId);
+	    
+	    if (projectIndex !== -1) {
+	      // 从列表中移除项目
+	      projectList.splice(projectIndex, 1);
+	      
+	      // 保存到全局数据（saveProjectList会自动更新全局数据）
+	      await app.saveProjectList(projectList);
+	      
+	      // 重新初始化数据并强制刷新UI
+	      await this.initData();
+	      await this.initChart();
+	      
+	      // 强制刷新页面数据
+	      this.setData({
+	        filteredProjectList: this.data.filteredProjectList.filter(item => item.id !== projectId)
+	      });
+	      
+	      wx.showToast({
+	        title: '项目已删除',
+	        icon: 'success'
+	      });
+	    }
+	  },
 
   // 获取时间范围文本（用于语音解读）
   getTimeRangeText() {
@@ -423,5 +487,13 @@ Page({
   // 格式化时间
   formatTime(seconds) {
     return app.formatTime(seconds);
+  },
+
+  // 切换管理模式
+  toggleManageMode() {
+    const { isManageMode } = this.data;
+    this.setData({
+      isManageMode: !isManageMode
+    });
   }
 });

@@ -176,6 +176,15 @@ Page({
     await app.saveProjectList(newList);
     this.setData({ project: tempProject });
 
+    // 通知其他页面更新数据
+    const pages = getCurrentPages();
+    pages.forEach(page => {
+      // 如果是index页面，调用其initData方法更新数据
+      if (page.route === 'pages/index/index' && page.initData) {
+        page.initData();
+      }
+    });
+
     wx.showToast({ title: '修改保存成功！', icon: 'success' });
     // 检查超时状态
     await app.checkProjectTimeout(projectId);

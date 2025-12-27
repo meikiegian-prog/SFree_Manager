@@ -61,14 +61,15 @@
     </button>
   </view>
 
-  <!-- ECharts图表容器（核心可视化） -->
-  <view class="chart-container">
-    <ec-canvas 
-      id="mychart-dom" 
-      canvas-id="mychart" 
-      ec="{{ec}}"
-    ></ec-canvas>
-  </view>
+	  <!-- ECharts图表容器（核心可视化） -->
+	  <view class="chart-container">
+	    <ec-canvas 
+	      id="mychart-dom" 
+	      canvas-id="mychart" 
+	      ec="{{ec}}"
+	      type="2d"
+	    ></ec-canvas>
+	  </view>
 
   <!-- 数据汇总 -->
   <view class="data-summary p-30">
@@ -86,21 +87,30 @@
     </view>
   </view>
 
-  <!-- 已完成项目列表 -->
-  <view class="completed-projects-section" wx:if="{{filteredProjectList.length > 0}}">
-    <view class="section-header">
-      <text class="section-title">已完成项目</text>
-      <text class="section-subtitle">共{{filteredProjectList.length}}个项目已完成</text>
-    </view>
-    
-    <view class="completed-projects-list">
-      <project-card 
-        wx:for="{{filteredProjectList}}" 
-        wx:key="id"
-        project="{{item}}"
-        bind:finishProject="handleFinishProject"
-        bind:deleteProject="onDeleteProject"
-      />
-    </view>
-  </view>
+	  <!-- 已完成项目列表 -->
+	  <view class="completed-projects-section" wx:if="{{filteredProjectList.length > 0}}">
+	    <view class="section-header">
+	      <view class="section-title-container">
+	        <text class="section-title">已完成项目</text>
+	        <button 
+	          class="manage-btn {{isManageMode ? 'active' : ''}}"
+	          bindtap="toggleManageMode"
+	        >
+	          {{isManageMode ? '完成管理' : '管理'}}
+	        </button>
+	      </view>
+	      <text class="section-subtitle">共{{filteredProjectList.length}}个项目已完成</text>
+	    </view>
+	    
+	    <view class="completed-projects-list">
+	      <project-card 
+	        wx:for="{{filteredProjectList}}" 
+	        wx:key="id"
+	        project="{{item}}"
+	        is-manage-mode="{{isManageMode}}"
+	        bind:finishProject="handleFinishProject"
+	        bind:deleteProject="onDeleteProject"
+	      />
+	    </view>
+	  </view>
 </view>

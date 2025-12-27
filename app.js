@@ -30,12 +30,20 @@ App({
   async saveProjectList(list) {
     return new Promise((resolve, reject) => {
       try {
+        console.log('=== saveProjectList 开始 ===');
+        console.log('保存前的全局项目列表:', this.globalData.projectList);
+        console.log('要保存的项目列表:', list);
+        console.log('项目数量:', list.length);
+        
         this.globalData.projectList = list;
         wx.setStorage({
           key: 'projectList',
           data: list,
           success: () => {
             console.log('项目列表保存成功');
+            console.log('保存后的全局项目列表:', this.globalData.projectList);
+            console.log('保存后的项目数量:', this.globalData.projectList.length);
+            console.log('=== saveProjectList 完成 ===');
             resolve(list);
           },
           fail: (err) => {
@@ -94,24 +102,46 @@ App({
   // 完成任务成就系统
   async completeProjectAchievement(projectId) {
     const projectList = this.globalData.projectList;
+    
+    console.log('=== 开始完成项目 ===');
+    console.log('项目ID:', projectId);
+    console.log('当前项目列表:', projectList);
+    console.log('项目列表长度:', projectList.length);
+    
+    // 详细检查每个项目
+    projectList.forEach((item, index) => {
+      console.log(`项目${index + 1}:`, item.name, 'ID:', item.id, '状态:', item.status);
+    });
+    
     const targetProject = projectList.find(item => item.id === projectId);
-    if (targetProject && targetProject.status !== 'finished') {
+    
+    console.log('找到的目标项目:', targetProject);
+    console.log('项目ID匹配检查:');
+    projectList.forEach(item => {
+      console.log(`项目ID: ${item.id}, 目标ID: ${projectId}, 是否匹配: ${item.id === projectId}`);
+    });
+    
+    if (targetProject) {
+      // 移除状态检查，确保即使项目已经是finished状态也能正确设置
       // 如果项目正在追踪，先停止追踪
       const isTracking = this.globalData.timerData.trackingProjects.some(
         item => item.projectId === projectId
       );
+      console.log('项目是否在追踪中:', isTracking);
+      
       if (isTracking) {
         await this.pauseTrackingProject(projectId, false); // 传递false参数，不自动设置状态
-        // 确保项目状态正确设置为完成
-        targetProject.status = 'finished';
-      } else {
-        // 项目不在追踪中，直接设置为完成状态
-        targetProject.status = 'finished';
       }
       
-      // 记录完成时间
-      targetProject.finishTime = new Date().toISOString().slice(0, 16).replace('T', ' ');
+      // 确保项目状态正确设置为完成
+      targetProject.status = 'finished';
+      
+      // 记录完成时间（使用标准ISO格式，确保能被正确解析）
+      targetProject.finishTime = new Date().toISOString();
       await this.saveProjectList(projectList);
+      
+      console.log('项目完成状态已设置:', targetProject.name, '状态:', targetProject.status);
+      console.log('保存后的项目列表:', projectList);
       
       // 弹出卡通风格成就勋章
       wx.showModal({
@@ -128,7 +158,15 @@ App({
       
       // 累计奖励统计
       this.updateContinuousAchievement();
+    } else {
+      console.error('未找到项目:', projectId);
+      console.error('可能的原因:');
+      console.error('1. 项目ID不匹配');
+      console.error('2. 项目列表为空');
+      console.error('3. 项目数据损坏');
     }
+    
+    console.log('=== 项目完成处理结束 ===');
   },
 
   // 更新连续完成任务成就
@@ -221,7 +259,11 @@ App({
 
     async onLaunch() {
       // 初始化本地缓存
+      console.log('=== onLaunch 开始 ===');
+      console.log('存储中是否有项目数据:', !!wx.getStorageSync('projectList'));
+      
       if (!wx.getStorageSync('projectList')) {
+        console.log('没有项目数据，创建测试数据');
         // 如果没有项目数据，创建一些测试数据
         const testData = [
           {
@@ -244,9 +286,17 @@ App({
           }
         ];
         await this.saveProjectList(testData);
+        console.log('测试数据创建完成');
       } else {
-        this.globalData.projectList = wx.getStorageSync('projectList');
+        console.log('从存储加载项目数据');
+        const storedData = wx.getStorageSync('projectList');
+        console.log('存储中的项目数量:', storedData.length);
+        console.log('存储中的项目:', storedData);
+        this.globalData.projectList = storedData;
       }
+      
+      console.log('全局数据中的项目数量:', this.globalData.projectList.length);
+      console.log('=== onLaunch 完成 ===');
     
     // 修复：onShow 中误调用 that 的问题，直接在 onLaunch 初始化 Token
     this.initBaiduYuyinAccessToken();
@@ -377,8 +427,149 @@ App({
         suggestedIncome: 0
       };
       
+      // 中文数字到阿拉伯数字映射
+      const chineseNumbers = {
+        '零': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, 
+        '六': 6, '七': 7, '八': 8, '九': 9, '十': 10,
+        '十一': 11, '十二': 12, '十三': 13, '十四': 14, '十五': 15,
+        '十六': 16, '十七': 17, '十八': 18, '十九': 19, '二十': 20,
+        '二十一': 21, '二十二': 22, '二十三': 23, '二十四': 24
+      };
+      
+      // 将中文数字转换为阿拉伯数字
+      const convertChineseNumber = (chineseNum) => {
+        if (/^\d+$/.test(chineseNum)) {
+          return parseInt(chineseNum);
+        }
+        return chineseNumbers[chineseNum] || 0;
+      };
+      
       // 增强时间识别模式 - 支持更多时间范围和更灵活的表达
       const timePatterns = [
+        // 中文详细时间：下午七点二十一分、二十一点十五分
+        { pattern: /(上午|下午)?\s*([零一二三四五六七八九十]+)点\s*([零一二三四五六七八九十]+)分/, 
+          calculate: (matches) => {
+            const today = new Date();
+            let period = matches[1] || '';
+            let hours = convertChineseNumber(matches[2]);
+            let minutes = convertChineseNumber(matches[3]);
+            
+            if (period === '下午' && hours < 12) hours += 12;
+            else if (period === '上午' && hours === 12) hours = 0;
+            
+            today.setHours(hours, minutes, 0, 0);
+            
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const hourStr = String(hours).padStart(2, '0');
+            const minuteStr = String(minutes).padStart(2, '0');
+            
+            return `${year}-${month}-${day} ${hourStr}:${minuteStr}`;
+          }
+        },
+        
+        // 中文时间：七点、二十一点
+        { pattern: /(上午|下午)?\s*([零一二三四五六七八九十]+)点/, 
+          calculate: (matches) => {
+            const today = new Date();
+            let period = matches[1] || '';
+            let hours = convertChineseNumber(matches[2]);
+            let minutes = 0;
+            
+            if (period === '下午' && hours < 12) hours += 12;
+            else if (period === '上午' && hours === 12) hours = 0;
+            
+            today.setHours(hours, minutes, 0, 0);
+            
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const hourStr = String(hours).padStart(2, '0');
+            const minuteStr = String(minutes).padStart(2, '0');
+            
+            return `${year}-${month}-${day} ${hourStr}:${minuteStr}`;
+          }
+        },
+        
+        // 天数识别：15/十五天后
+        { pattern: /(\d+|零|一|二|三|四|五|六|七|八|九|十|十一|十二|十三|十四|十五|十六|十七|十八|十九|二十|二十一|二十二|二十三|二十四|二十五|二十六|二十七|二十八|二十九|三十)天后/, 
+          calculate: (matches) => {
+            const date = new Date();
+            const days = convertChineseNumber(matches[1]);
+            date.setDate(date.getDate() + days);
+            date.setHours(18, 0, 0, 0); // 默认下午6点
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hourStr = String(18).padStart(2, '0');
+            const minuteStr = String(0).padStart(2, '0');
+            
+            return `${year}-${month}-${day} ${hourStr}:${minuteStr}`;
+          }
+        },
+        
+        // 星期识别：一周/一星期后
+        { pattern: /(\d+|零|一|二|三|四|五|六|七)周后/, 
+          calculate: (matches) => {
+            const date = new Date();
+            const weeks = convertChineseNumber(matches[1]);
+            date.setDate(date.getDate() + (weeks * 7));
+            date.setHours(18, 0, 0, 0); // 默认下午6点
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hourStr = String(18).padStart(2, '0');
+            const minuteStr = String(0).padStart(2, '0');
+            
+            return `${year}-${month}-${day} ${hourStr}:${minuteStr}`;
+          }
+        },
+        
+        // 星期识别：一星期后
+        { pattern: /(\d+|零|一|二|三|四|五|六|七)星期后/, 
+          calculate: (matches) => {
+            const date = new Date();
+            const weeks = convertChineseNumber(matches[1]);
+            date.setDate(date.getDate() + (weeks * 7));
+            date.setHours(18, 0, 0, 0); // 默认下午6点
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hourStr = String(18).padStart(2, '0');
+            const minuteStr = String(0).padStart(2, '0');
+            
+            return `${year}-${month}-${day} ${hourStr}:${minuteStr}`;
+          }
+        },
+        
+        // 月数识别：一个月/半个月/十个月/10个月后
+        { pattern: /(\d+|零|一|二|三|四|五|六|七|八|九|十|半)个月后/, 
+          calculate: (matches) => {
+            const date = new Date();
+            let months = convertChineseNumber(matches[1]);
+            
+            if (matches[1] === '半') {
+              // 半个月 = 15天
+              date.setDate(date.getDate() + 15);
+            } else {
+              date.setMonth(date.getMonth() + months);
+            }
+            date.setHours(18, 0, 0, 0); // 默认下午6点
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hourStr = String(18).padStart(2, '0');
+            const minuteStr = String(0).padStart(2, '0');
+            
+            return `${year}-${month}-${day} ${hourStr}:${minuteStr}`;
+          }
+        },
+        
         // 具体日期格式：YYYY-MM-DD HH:mm
         { pattern: /(\d{4})[-年](\d{1,2})[-月](\d{1,2})[日]?\s*(\d{1,2})?:?(\d{0,2})?/, 
           calculate: (matches) => {
@@ -474,7 +665,7 @@ App({
         },
         
         // 明天上午/下午 + 时间（更精确的上午/下午处理）
-        { pattern: /明天\s*(上午|下午)?\s*(\d{1,2})[点:](\d{0,2})/, 
+        { pattern: /明天\s*(上午|下午)?\s*(\d{1,2})[点:：](\d{0,2})/,
           calculate: (matches) => {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -506,7 +697,7 @@ App({
         },
         
         // 后天上午/下午 + 时间
-        { pattern: /后天\s*(上午|下午)?\s*(\d{1,2})[点:](\d{0,2})/, 
+        { pattern: /后天\s*(上午|下午)?\s*(\d{1,2})[点:：](\d{0,2})/, 
           calculate: (matches) => {
             const dayAfterTomorrow = new Date();
             dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
@@ -535,7 +726,7 @@ App({
         },
         
         // 大后天 + 时间
-        { pattern: /大后天\s*(\d{1,2})[点:](\d{0,2})/, 
+        { pattern: /大后天\s*(\d{1,2})[点:：](\d{0,2})/, 
           calculate: (matches) => {
             const threeDaysLater = new Date();
             threeDaysLater.setDate(threeDaysLater.getDate() + 3);
@@ -559,7 +750,7 @@ App({
         },
         
         // 今天 + 时间
-        { pattern: /今天\s*(\d{1,2})[点:](\d{0,2})/, 
+        { pattern: /今天\s*(\d{1,2})[点:：](\d{0,2})/, 
           calculate: (matches) => {
             const today = new Date();
             
@@ -581,8 +772,8 @@ App({
           }
         },
         
-        // 单独的时间（默认今天）- 要求明确的时间标识符，避免纯数字匹配
-        { pattern: /(\d{1,2})[点:：](\d{0,2})/, 
+        // 支持更多时间表达方式
+        { pattern: /(上午|下午)\s*(\d{1,2})[点:：](\d{0,2})/,
           calculate: (matches) => {
             const today = new Date();
             
@@ -610,7 +801,7 @@ App({
         },
         
         // 支持更多时间表达方式
-        { pattern: /(上午|下午)\s*(\d{1,2})[点:](\d{0,2})/, 
+        { pattern: /(上午|下午)\s*(\d{1,2})[点:：](\d{0,2})/, 
           calculate: (matches) => {
             const today = new Date();
             
@@ -639,16 +830,27 @@ App({
       ];
     
     // 应用时间识别（按优先级顺序）
+    let matchedPattern = null;
     for (const timePattern of timePatterns) {
       const matches = text.match(timePattern.pattern);
       if (matches) {
         try {
           result.deadline = timePattern.calculate(matches);
+          matchedPattern = timePattern;
           break;
         } catch (error) {
           console.warn('时间解析失败:', error);
           // 继续尝试其他模式
         }
+      }
+    }
+    
+    // 如果识别到时间，从项目名称中移除时间信息
+    if (matchedPattern && result.deadline) {
+      result.name = text.replace(matchedPattern.pattern, '').trim();
+      // 如果名称为空，使用默认名称
+      if (!result.name) {
+        result.name = '新项目';
       }
     }
     

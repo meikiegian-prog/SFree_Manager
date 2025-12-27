@@ -35,6 +35,11 @@ Component({
           isProjectTracking: isTracking
         });
       }
+    },
+    // 接收管理模式状态
+    isManageMode: {
+      type: Boolean,
+      value: false
     }
   },
 
@@ -54,8 +59,11 @@ Component({
       const projectId = e.currentTarget.dataset.projectid;
       const { project } = this.data;
       
-      // 检查项目是否设置了截止日期和预计收入
-      if (!project.deadline || !project.income) {
+      // 改进检查逻辑：支持收入为0的情况
+      const hasDeadline = project.deadline && project.deadline !== '未设置' && project.deadline.trim() !== '';
+      const hasIncome = project.income !== undefined && project.income !== null && project.income !== '' && !isNaN(Number(project.income));
+      
+      if (!hasDeadline || !hasIncome) {
         // 显示提示信息并振动
         wx.vibrateShort({ type: 'light' });
         wx.showToast({

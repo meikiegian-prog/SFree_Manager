@@ -128,12 +128,38 @@
   margin-bottom: 25rpx;
 }
 
+.section-title-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+
 .section-title {
   font-size: 36rpx;
   font-weight: bold;
   color: #333;
-  display: block;
-  margin-bottom: 10rpx;
+}
+
+.manage-btn {
+  background: #2E7DFF;
+  color: white;
+  border: none;
+  border-radius: 20rpx;
+  padding: 10rpx 20rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  margin-left: auto; /* 让管理按钮靠右 */
+}
+
+.manage-btn.active {
+  background: #1a5bb8;
+  transform: scale(0.95);
+}
+
+.manage-btn:active {
+  transform: scale(0.9);
 }
 
 .section-subtitle {

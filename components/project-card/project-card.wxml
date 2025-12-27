@@ -1,5 +1,8 @@
 <!-- 项目卡片组件 - 核心HCI：大尺寸按钮、渐变提醒 -->
 <view class="project-card {{(!project.deadline || !project.income) ? 'incomplete-project' : ''}} {{project.status === 'finished' ? 'finished-project' : ''}}" style="background: {{project.status === 'timeout' ? 'linear-gradient(to right, #ffebee, #f44336)' : (project.status === 'finished' ? 'linear-gradient(to right, #e8f5e8, #4CAF50)' : 'white')}};">
+  <!-- 删除按钮（仅在管理模式下显示） -->
+  <view class="delete-x-btn" wx:if="{{isManageMode}}" bindtap="deleteProject" data-projectid="{{project.id}}">×</view>
+  
   <!-- 黄色三角感叹号（仅当项目信息不完整时显示） -->
   <view class="warning-icon" wx:if="{{!project.deadline || !project.income}}">!</view>
   <!-- 悬停提示 -->

@@ -109,7 +109,7 @@ Page({
           const parsedInfo = app.parseProjectCreationText(text);
           
           const newProject = {
-            id: Date.now().toString(),
+            id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             name: parsedInfo.name,
             deadline: parsedInfo.deadline,
             totalTime: 0,
@@ -118,9 +118,22 @@ Page({
             createTime: new Date().toISOString().slice(0, 16).replace('T', ' ') // 精确到分钟：YYYY-MM-DD HH:mm
           };
 
-          const newList = [...app.globalData.projectList, newProject];
+          // 确保正确合并项目列表，避免数据覆盖
+          const currentProjectList = [...app.globalData.projectList];
+          const newList = [...currentProjectList, newProject];
+          
+          console.log('=== 项目创建调试信息 ===');
+          console.log('创建前的项目列表:', currentProjectList);
+          console.log('项目数量:', currentProjectList.length);
+          console.log('新项目:', newProject);
+          console.log('合并后的项目列表:', newList);
+          console.log('合并后项目数量:', newList.length);
+          
           await app.saveProjectList(newList);
-          this.setData({ projectList: newList.filter(item => item.status !== 'finished') });
+          
+          console.log('保存后的全局项目列表:', app.globalData.projectList);
+          console.log('保存后项目数量:', app.globalData.projectList.length);
+          this.setData({ projectList: app.globalData.projectList.filter(item => item.status !== 'finished') });
 
           // 如果建议自动追踪，询问用户
           if (parsedInfo.autoStartTracking) {
@@ -181,7 +194,7 @@ Page({
       
       this.setData({ 
         timerData: app.globalData.timerData,
-        projectList: app.globalData.projectList,
+        projectList: app.globalData.projectList.filter(item => item.status !== 'finished'),
         trackingProjects,
         trackingProjectsWithFullData
       });
@@ -227,30 +240,32 @@ Page({
       totalTime = Math.floor((Date.now() - earliestStartTime) / 1000);
     }
     
-    // 实时更新每个追踪项目的累计时长（简单方法：每秒增加1秒）
-    if (trackingProjects.length > 0) {
-      const projectList = [...this.data.projectList]; // 创建新数组确保数据变化被检测
-      let hasUpdated = false;
-      
-      trackingProjects.forEach(trackingProject => {
-        const projectIndex = projectList.findIndex(p => p.id === trackingProject.projectId);
-        if (projectIndex !== -1) {
-          // 创建新对象确保数据变化被检测
-          const updatedProject = {
-            ...projectList[projectIndex],
-            totalTime: (projectList[projectIndex].totalTime || 0) + 1
-          };
-          projectList[projectIndex] = updatedProject;
-          hasUpdated = true;
-        }
-      });
-      
-      if (hasUpdated) {
-        // 更新全局数据
-        app.globalData.projectList = projectList;
-        this.setData({ projectList });
-      }
-    }
+	    // 实时更新每个追踪项目的累计时长（简单方法：每秒增加1秒）
+	    if (trackingProjects.length > 0) {
+	      // 从完整的全局项目列表开始，确保不丢失已完成的项目
+	      const projectList = [...app.globalData.projectList];
+	      let hasUpdated = false;
+	      
+	      trackingProjects.forEach(trackingProject => {
+	        const projectIndex = projectList.findIndex(p => p.id === trackingProject.projectId);
+	        if (projectIndex !== -1) {
+	          // 创建新对象确保数据变化被检测
+	          const updatedProject = {
+	            ...projectList[projectIndex],
+	            totalTime: (projectList[projectIndex].totalTime || 0) + 1
+	          };
+	          projectList[projectIndex] = updatedProject;
+	          hasUpdated = true;
+	        }
+	      });
+	      
+	      if (hasUpdated) {
+	        // 更新全局数据并保存到存储
+	        app.globalData.projectList = projectList;
+	        // 只更新页面显示的未完成项目列表
+	        this.setData({ projectList: projectList.filter(item => item.status !== 'finished') });
+	      }
+	    }
     
     // 将追踪项目转换为完整项目数据
     const trackingProjectsWithFullData = trackingProjects.map(trackingProject => {
@@ -278,6 +293,12 @@ Page({
     // 使用新的成就系统处理项目完成
     await app.completeProjectAchievement(projectId);
     
+    // 重新计算本月总收入
+    const allProjects = app.globalData.projectList;
+    const totalIncome = allProjects
+      .filter(item => item.status === 'finished')
+      .reduce((sum, item) => sum + (item.income || 0), 0);
+    
     // 更新本地数据，包括追踪项目列表和完整追踪项目数据
     const trackingProjects = app.getTrackingProjects();
     const trackingProjectsWithFullData = trackingProjects.map(trackingProject => {
@@ -290,9 +311,10 @@ Page({
     }).filter(project => project); // 过滤掉找不到对应项目的条目
     
     this.setData({ 
-      projectList: app.globalData.projectList,
+      projectList: app.globalData.projectList.filter(item => item.status !== 'finished'),
       trackingProjects,
-      trackingProjectsWithFullData
+      trackingProjectsWithFullData,
+      totalIncome  // 更新本月总收入
     });
   },
 
@@ -301,7 +323,7 @@ Page({
     for (const project of this.data.projectList) {
       await app.checkProjectTimeout(project.id);
     }
-    this.setData({ projectList: app.globalData.projectList });
+    this.setData({ projectList: app.globalData.projectList.filter(item => item.status !== 'finished') });
   },
 
   // 显示快速记录面板
@@ -328,7 +350,7 @@ Page({
       const parsedInfo = app.parseProjectCreationText(text);
       
       const newProject = {
-        id: `task_${Date.now()}`,
+        id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name: parsedInfo.name,
         deadline: parsedInfo.deadline,
         totalTime: 0,
@@ -339,7 +361,7 @@ Page({
 
       const newList = [...app.globalData.projectList, newProject];
       await app.saveProjectList(newList);
-      this.setData({ projectList: newList.filter(item => item.status !== 'finished') });
+      this.setData({ projectList: app.globalData.projectList.filter(item => item.status !== 'finished') });
 
       wx.showToast({ title: '任务保存成功！', icon: 'success' });
     },
@@ -357,7 +379,7 @@ Page({
     // 更新数据
     this.setData({ 
       timerData: app.globalData.timerData,
-      projectList: app.globalData.projectList,
+      projectList: app.globalData.projectList.filter(item => item.status !== 'finished'),
       trackingProjects: app.getTrackingProjects()
     });
   },
