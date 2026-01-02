@@ -70,7 +70,17 @@ Page({
         // 使用项目的实际状态，而不是强制设置为'tracking'
         status: fullProject ? fullProject.status : 'tracking'
       };
-    }).filter(project => project); // 过滤掉找不到对应项目的条目
+    }).filter(project => project) // 过滤掉找不到对应项目的条目
+    .sort((a, b) => {
+      // 首先按优先级排序（从小到大）
+      if (a.priority !== b.priority) {
+        return (a.priority || 0) - (b.priority || 0);
+      }
+      // 优先级相同时，按截止日期时间最短排序
+      const aDeadline = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+      const bDeadline = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+      return aDeadline - bDeadline;
+    });
 
     this.setData({
       projectList,
@@ -190,7 +200,17 @@ Page({
           // 使用项目的实际状态，而不是强制设置为'tracking'
           status: fullProject ? fullProject.status : 'tracking'
         };
-      }).filter(project => project); // 过滤掉找不到对应项目的条目
+      }).filter(project => project) // 过滤掉找不到对应项目的条目
+      .sort((a, b) => {
+        // 首先按优先级排序（从小到大）
+        if (a.priority !== b.priority) {
+          return (a.priority || 0) - (b.priority || 0);
+        }
+        // 优先级相同时，按截止日期时间最短排序
+        const aDeadline = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+        const bDeadline = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+        return aDeadline - bDeadline;
+      });
       
       this.setData({ 
         timerData: app.globalData.timerData,
@@ -275,7 +295,17 @@ Page({
         // 使用项目的实际状态，而不是强制设置为'tracking'
         status: fullProject ? fullProject.status : 'tracking'
       };
-    }).filter(project => project); // 过滤掉找不到对应项目的条目
+    }).filter(project => project) // 过滤掉找不到对应项目的条目
+    .sort((a, b) => {
+      // 首先按优先级排序（从小到大）
+      if (a.priority !== b.priority) {
+        return (a.priority || 0) - (b.priority || 0);
+      }
+      // 优先级相同时，按截止日期时间最短排序
+      const aDeadline = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+      const bDeadline = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+      return aDeadline - bDeadline;
+    });
     
     this.setData({
       trackingProjects,
@@ -299,23 +329,33 @@ Page({
       .filter(item => item.status === 'finished')
       .reduce((sum, item) => sum + (item.income || 0), 0);
     
-    // 更新本地数据，包括追踪项目列表和完整追踪项目数据
-    const trackingProjects = app.getTrackingProjects();
-    const trackingProjectsWithFullData = trackingProjects.map(trackingProject => {
-      const fullProject = app.globalData.projectList.find(p => p.id === trackingProject.projectId);
-      return {
-        ...fullProject,
-        // 使用项目的实际状态，而不是强制设置为'tracking'
-        status: fullProject ? fullProject.status : 'tracking'
-      };
-    }).filter(project => project); // 过滤掉找不到对应项目的条目
-    
-    this.setData({ 
-      projectList: app.globalData.projectList.filter(item => item.status !== 'finished'),
-      trackingProjects,
-      trackingProjectsWithFullData,
-      totalIncome  // 更新本月总收入
-    });
+      // 更新本地数据，包括追踪项目列表和完整追踪项目数据
+      const trackingProjects = app.getTrackingProjects();
+      const trackingProjectsWithFullData = trackingProjects.map(trackingProject => {
+        const fullProject = app.globalData.projectList.find(p => p.id === trackingProject.projectId);
+        return {
+          ...fullProject,
+          // 使用项目的实际状态，而不是强制设置为'tracking'
+          status: fullProject ? fullProject.status : 'tracking'
+        };
+      }).filter(project => project) // 过滤掉找不到对应项目的条目
+      .sort((a, b) => {
+        // 首先按优先级排序（从小到大）
+        if (a.priority !== b.priority) {
+          return (a.priority || 0) - (b.priority || 0);
+        }
+        // 优先级相同时，按截止日期时间最短排序
+        const aDeadline = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+        const bDeadline = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+        return aDeadline - bDeadline;
+      });
+      
+      this.setData({ 
+        projectList: app.globalData.projectList.filter(item => item.status !== 'finished'),
+        trackingProjects,
+        trackingProjectsWithFullData,
+        totalIncome  // 更新本月总收入
+      });
   },
 
   // 检查超时项目
@@ -376,12 +416,8 @@ Page({
     await app.pauseTrackingProject(projectId);
     wx.showToast({ title: `已暂停追踪：${project.name}`, icon: 'success' });
     
-    // 更新数据
-    this.setData({ 
-      timerData: app.globalData.timerData,
-      projectList: app.globalData.projectList.filter(item => item.status !== 'finished'),
-      trackingProjects: app.getTrackingProjects()
-    });
+    // 更新数据，调用updateTrackingData确保排序生效
+    this.updateTrackingData();
   },
 
   // 处理优先级更改事件

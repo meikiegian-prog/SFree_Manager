@@ -154,6 +154,13 @@ Page({
     }
   },
 
+  // 修改项目名称
+  onNameChange(e) {
+    this.setData({
+      'tempProject.name': e.detail.value || ''
+    });
+  },
+
   // 修改收入
   onIncomeChange(e) {
     this.setData({

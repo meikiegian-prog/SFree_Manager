@@ -4,7 +4,7 @@
   <view class="project-header">
     <view class="project-name">{{project.name}}</view>
     <view class="project-status {{project.status}}">
-      {{project.status === 'doing' ? '进行中' : project.status === 'finished' ? '已完成' : '已超时'}}
+      {{project.status === 'finished' ? '已完成' : project.status === 'timeout' ? '已超时' : '进行中'}}
     </view>
   </view>
 
@@ -38,6 +38,19 @@
 
     <!-- 编辑区域 -->
     <view class="project-edit p-30">
+      <!-- 项目名称编辑 -->
+      <view class="edit-item">
+        <text class="edit-label">项目名称</text>
+        <input 
+          class="edit-input" 
+          type="text" 
+          placeholder="输入项目名称"
+          value="{{project.name || ''}}"
+          bindinput="onNameChange"
+          maxlength="50"
+        />
+      </view>
+
       <!-- 截止日期选择 - 分开选择日期和时间 -->
       <view class="edit-item">
         <text class="edit-label">设置截止日期</text>

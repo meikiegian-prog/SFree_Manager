@@ -1,40 +1,40 @@
 <!-- 追踪项目卡片组件 - 支持优先级设置、颜色渐变、晃动提醒 -->
 <view 
   class="tracking-project-card {{isShaking ? 'shaking' : ''}}" 
-  style="background: linear-gradient(to right, {{cardColor}}20, {{cardColor}}40); border-left: 8px solid {{cardColor}};"
+  style="background: linear-gradient(to right, {{startColor}}, {{endColor}}); border-left: 8px solid {{borderColor}};"
 >
   <!-- 项目头部信息 -->
   <view class="card-header">
-    <view class="project-name">{{project.name}}</view>
-    <view class="priority-badge">优先级 {{priority}}</view>
+    <view class="project-name" style="color: #FFFFFF">{{project.name}}</view>
+    <view class="priority-badge" style="background: {{borderColor}}; color: #FFFFFF">优先级 {{priority}}</view>
   </view>
 
   <!-- 项目详细信息 -->
   <view class="card-content">
     <view class="info-row">
-      <text class="info-label">截止日期：</text>
-      <text class="info-value">{{project.deadline || '未设置'}}</text>
+      <text class="info-label" style="color: #FFFFFF">截止日期：</text>
+      <text class="info-value" style="color: #FFFFFF">{{project.deadline || '未设置'}}</text>
     </view>
     
     <view class="info-row">
-      <text class="info-label">累计时长：</text>
-      <text class="info-value">{{formattedTotalTime}}</text>
+      <text class="info-label" style="color: #FFFFFF">累计时长：</text>
+      <text class="info-value" style="color: #FFFFFF">{{formattedTotalTime}}</text>
     </view>
     
     <view class="info-row">
-      <text class="info-label">预计收入：</text>
-      <text class="info-value">¥{{project.income || 0}}</text>
+      <text class="info-label" style="color: #FFFFFF">预计收入：</text>
+      <text class="info-value" style="color: #FFFFFF">¥{{project.income || 0}}</text>
     </view>
     
     <view class="info-row">
-      <text class="info-label">剩余时间：</text>
-      <text class="info-value time-remaining">{{remainingTime}}</text>
+      <text class="info-label" style="color: #FFFFFF">剩余时间：</text>
+      <text class="info-value time-remaining" style="color: {{textColor}}">{{remainingTime}}</text>
     </view>
   </view>
 
   <!-- 优先级设置区域 -->
   <view class="priority-section">
-    <text class="priority-label">设置优先级：</text>
+    <text class="priority-label" style="color: #FFFFFF">设置优先级：</text>
     <view class="priority-buttons">
       <button 
         class="priority-btn {{priority === 1 ? 'active' : ''}}" 
