@@ -252,40 +252,12 @@ Page({
   updateTrackingData() {
     const trackingProjects = app.getTrackingProjects();
     
-    // 计算总时长
+    // 计算总时长（使用追踪项目的 elapsedTime）
     let totalTime = 0;
     if (trackingProjects.length > 0) {
-      const startTimes = trackingProjects.map(p => p.startTime);
-      const earliestStartTime = Math.min(...startTimes);
-      totalTime = Math.floor((Date.now() - earliestStartTime) / 1000);
+      // 使用追踪项目的 elapsedTime 计算总时长
+      totalTime = trackingProjects.reduce((sum, project) => sum + project.elapsedTime, 0);
     }
-    
-	    // 实时更新每个追踪项目的累计时长（简单方法：每秒增加1秒）
-	    if (trackingProjects.length > 0) {
-	      // 从完整的全局项目列表开始，确保不丢失已完成的项目
-	      const projectList = [...app.globalData.projectList];
-	      let hasUpdated = false;
-	      
-	      trackingProjects.forEach(trackingProject => {
-	        const projectIndex = projectList.findIndex(p => p.id === trackingProject.projectId);
-	        if (projectIndex !== -1) {
-	          // 创建新对象确保数据变化被检测
-	          const updatedProject = {
-	            ...projectList[projectIndex],
-	            totalTime: (projectList[projectIndex].totalTime || 0) + 1
-	          };
-	          projectList[projectIndex] = updatedProject;
-	          hasUpdated = true;
-	        }
-	      });
-	      
-	      if (hasUpdated) {
-	        // 更新全局数据并保存到存储
-	        app.globalData.projectList = projectList;
-	        // 只更新页面显示的未完成项目列表
-	        this.setData({ projectList: projectList.filter(item => item.status !== 'finished') });
-	      }
-	    }
     
     // 将追踪项目转换为完整项目数据
     const trackingProjectsWithFullData = trackingProjects.map(trackingProject => {

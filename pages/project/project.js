@@ -105,14 +105,24 @@ Page({
     );
     
     if (isTracking) {
-      // 项目正在追踪，实时更新累计时长（简单方法：每秒增加1秒）
-      const totalTime = (project.totalTime || 0) + 1;
-      const formattedTotalTime = this.formatTime(totalTime);
+      // 项目正在追踪，从全局计时器获取准确的累计时长
+      const trackingProjects = app.getTrackingProjects();
+      const trackingProject = trackingProjects.find(item => item.projectId === projectId);
       
-      this.setData({
-        formattedTotalTime,
-        'project.totalTime': totalTime
-      });
+      if (trackingProject) {
+        // 使用追踪项目的 elapsedTime 加上项目的原始 totalTime
+        const totalTime = (project.totalTime || 0) + trackingProject.elapsedTime;
+        const formattedTotalTime = this.formatTime(totalTime);
+        
+        this.setData({
+          formattedTotalTime,
+          'project.totalTime': totalTime
+        });
+      } else {
+        // 如果找不到追踪项目，使用静态累计时长
+        const formattedTotalTime = this.formatTime(project.totalTime || 0);
+        this.setData({ formattedTotalTime });
+      }
     } else {
       // 项目未在追踪，使用静态累计时长
       const formattedTotalTime = this.formatTime(project.totalTime || 0);

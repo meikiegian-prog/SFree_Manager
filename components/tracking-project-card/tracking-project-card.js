@@ -88,20 +88,26 @@ Component({
       );
       
       if (isTracking) {
-        // 项目正在追踪，实时更新累计时长（每秒增加1秒）
-        const totalTime = (project.totalTime || 0) + 1;
-        const formattedTotalTime = this.formatTime(totalTime);
+        // 项目正在追踪，从全局计时器获取准确的累计时长
+        const trackingProjects = app.getTrackingProjects();
+        const trackingProject = trackingProjects.find(item => item.projectId === project.id);
         
-        // 只更新本地显示数据，不修改project对象
-        this.setData({
-          formattedTotalTime
-        });
-        
-        // 通知父组件累计时长已更新
-        this.triggerEvent('timeUpdate', {
-          projectId: project.id,
-          totalTime: totalTime
-        });
+        if (trackingProject) {
+          // 使用追踪项目的 elapsedTime 加上项目的原始 totalTime
+          const totalTime = (project.totalTime || 0) + trackingProject.elapsedTime;
+          const formattedTotalTime = this.formatTime(totalTime);
+          
+          // 只更新本地显示数据，不修改project对象
+          this.setData({
+            formattedTotalTime
+          });
+          
+          // 通知父组件累计时长已更新
+          this.triggerEvent('timeUpdate', {
+            projectId: project.id,
+            totalTime: totalTime
+          });
+        }
       }
     },
 

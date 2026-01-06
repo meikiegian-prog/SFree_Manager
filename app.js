@@ -4,8 +4,10 @@ App({
     projectList: wx.getStorageSync('projectList') || [],
     timerData: {
       // 支持多项目追踪的新结构
-      trackingProjects: [], // 正在追踪的项目数组 {projectId, startTime, projectName}
-      timerInterval: null // 计时器定时器 ID
+      trackingProjects: [], // 正在追踪的项目数组 {projectId, startTime, projectName, lastElapsedTime}
+      timerInterval: null, // 计时器定时器 ID
+      backgroundTime: null, // 小程序进入后台的时间戳
+      lastActiveTime: Date.now() // 最后活动时间
     },
     // 百度语音识别配置（已填入你的密钥）
     baiduYuyin: {
@@ -259,6 +261,30 @@ App({
 
     async onLaunch() {
       // 初始化本地缓存
+      const savedTracking = wx.getStorageSync('trackingProjects');
+      console.log('从存储加载的追踪项目:', savedTracking);
+      
+      if(savedTracking && Array.isArray(savedTracking)) {
+        // 严格过滤无效项目
+        const validTracking = savedTracking.filter(project => {
+          const isValid = project && 
+                         project.projectId && 
+                         project.projectName &&
+                         this.globalData.projectList.some(p => p.id === project.projectId);
+          if (!isValid) {
+            console.warn('过滤掉无效追踪项目:', project);
+          }
+          return isValid;
+        });
+        
+        this.globalData.timerData.trackingProjects = validTracking;
+        console.log('有效的追踪项目:', validTracking);
+        
+        // 强制保存过滤后的数据
+        wx.setStorageSync('trackingProjects', validTracking);
+      } else {
+        this.globalData.timerData.trackingProjects = [];
+      }
       console.log('=== onLaunch 开始 ===');
       console.log('存储中是否有项目数据:', !!wx.getStorageSync('projectList'));
       
@@ -318,12 +344,33 @@ App({
 
   // 开始追踪项目（支持多项目同时追踪）
   async startTrackingProject(projectId, projectName) {
+    if (!projectId || !projectName) {
+      console.error('无法开始追踪：缺少projectId或projectName');
+      return false;
+    }
+    
+    // 验证项目是否存在
+    const project = this.globalData.projectList.find(p => p.id === projectId);
+    if (!project) {
+      console.error('无法开始追踪：项目不存在', projectId);
+      return false;
+    }
+    
+    // 清理现有追踪状态
+    this.globalData.timerData.trackingProjects = 
+      this.globalData.timerData.trackingProjects.filter(
+        p => p.projectId !== projectId
+      );
+    
     const trackingProject = {
       projectId,
       projectName,
-      startTime: Date.now(),
-      lastElapsedTime: 0 // 添加lastElapsedTime属性，用于实时更新累计时长
+      startTime: Date.now(), // 确保是数字时间戳
+      totalElapsedTime: 0,   // 初始化为0
+      lastPauseTime: null
     };
+    
+    console.log('创建新的追踪项目:', trackingProject);
     
     // 检查是否已经在追踪
     const existingIndex = this.globalData.timerData.trackingProjects.findIndex(
@@ -334,9 +381,9 @@ App({
       // 新项目，添加到追踪列表
       this.globalData.timerData.trackingProjects.push(trackingProject);
     } else {
-      // 已存在，更新开始时间和重置lastElapsedTime
+      // 已存在，更新开始时间和重置totalElapsedTime
       this.globalData.timerData.trackingProjects[existingIndex].startTime = Date.now();
-      this.globalData.timerData.trackingProjects[existingIndex].lastElapsedTime = 0;
+      this.globalData.timerData.trackingProjects[existingIndex].totalElapsedTime = 0;
     }
     
     // 更新项目状态为追踪中
@@ -352,32 +399,38 @@ App({
       this.startGlobalTimer();
     }
     
+    // 保存追踪状态
+    wx.setStorageSync('trackingProjects', this.globalData.timerData.trackingProjects);
+    
     console.log('开始追踪项目:', projectName);
   },
 
   // 暂停追踪项目
   async pauseTrackingProject(projectId, autoSetStatus = true) {
     const trackingProjects = this.globalData.timerData.trackingProjects;
+    // 查找并移除项目
     const projectIndex = trackingProjects.findIndex(item => item.projectId === projectId);
-    
     if (projectIndex !== -1) {
       const trackingProject = trackingProjects[projectIndex];
+      // 计算已经追踪的时间
       const elapsedTime = Math.floor((Date.now() - trackingProject.startTime) / 1000);
       
-      // 更新项目总时长和状态
+      // 更新项目总时长
       const projectList = this.globalData.projectList;
       const targetProject = projectList.find(item => item.id === projectId);
       if (targetProject) {
         targetProject.totalTime += elapsedTime;
-        // 只有当autoSetStatus为true时才自动设置状态为暂停
         if (autoSetStatus) {
-          targetProject.status = 'paused'; // 更新状态为暂停
+          targetProject.status = 'paused';
         }
         await this.saveProjectList(projectList);
       }
       
       // 从追踪列表中移除
       trackingProjects.splice(projectIndex, 1);
+      
+      // 保存更新后的追踪列表
+      wx.setStorageSync('trackingProjects', trackingProjects);
       
       // 如果没有追踪中的项目，停止计时器
       if (trackingProjects.length === 0 && this.globalData.timerData.timerInterval) {
@@ -406,14 +459,44 @@ App({
     this.globalData.timerData.timerInterval = timerInterval;
   },
 
-  // 获取当前追踪项目列表
+  // 获取当前追踪项目列表（支持后台计时）
   getTrackingProjects() {
-    return this.globalData.timerData.trackingProjects.map(item => {
-      const elapsedTime = Math.floor((Date.now() - item.startTime) / 1000);
+    console.log('当前追踪项目原始数据:', this.globalData.timerData.trackingProjects);
+    
+    const validProjects = this.globalData.timerData.trackingProjects
+      .filter(item => {
+        const isValid = item && 
+                       item.projectId && 
+                       item.projectName &&
+                       typeof item.startTime === 'number' &&
+                       typeof item.totalElapsedTime === 'number';
+        if (!isValid) {
+          console.error('发现无效追踪项目:', item);
+        }
+        return isValid;
+      });
+    
+    console.log('有效追踪项目数量:', validProjects.length);
+    
+    return validProjects.map(item => {
+      // 确保数值有效
+      const startTime = Number(item.startTime) || Date.now();
+      const totalElapsedTime = Number(item.totalElapsedTime) || 0;
+      
+      // 计算活跃时间（限制在合理范围内）
+      const activeElapsedTime = Math.max(0, Math.floor((Date.now() - startTime) / 1000));
+      const calculatedTime = Math.min(totalElapsedTime + activeElapsedTime, 86400 * 7); // 限制最大7天
+      
+      console.log(`项目 ${item.projectName} 计算: 
+        开始时间: ${new Date(startTime).toISOString()}
+        累计时间: ${totalElapsedTime}
+        活跃时间: ${activeElapsedTime}
+        总时间: ${calculatedTime}`);
+      
       return {
         ...item,
-        elapsedTime,
-        formattedTime: this.formatTime(elapsedTime)
+        elapsedTime: calculatedTime,
+        formattedTime: this.formatTime(calculatedTime)
       };
     });
   },
@@ -860,8 +943,49 @@ App({
     return result;
   },
 
-  // 修复：删除错误的 onShow 方法（原代码中 onShow 未定义 that 导致报错）
+  // 小程序进入后台时调用
+  onHide() {
+    const now = Date.now();
+    // 保存当前时间到 backgroundTime
+    this.globalData.timerData.backgroundTime = now;
+    // 保存最后活动时间
+    this.globalData.timerData.lastActiveTime = now;
+    
+    // 更新每个追踪项目的 totalElapsedTime
+    this.globalData.timerData.trackingProjects.forEach(project => {
+      // 计算从最后一次开始/恢复追踪到现在的活跃时间
+      const activeElapsedTime = Math.floor((now - project.startTime) / 1000);
+      // 更新 totalElapsedTime
+      project.totalElapsedTime += activeElapsedTime;
+      // 记录暂停时间
+      project.lastPauseTime = now;
+    });
+    
+    console.log('小程序进入后台，保存时间戳和更新累计时间:', now);
+  },
+
+  // 小程序回到前台时调用
   onShow(options) {
-    // 无需重复初始化 Token，onLaunch 已执行
+    const { backgroundTime } = this.globalData.timerData;
+    
+    // 如果之前有保存后台时间，计算经过的后台时间
+    if (backgroundTime) {
+      const backgroundDuration = Math.floor((Date.now() - backgroundTime) / 1000);
+      console.log('小程序从后台返回，后台持续时间:', backgroundDuration, '秒');
+      
+      // 更新每个追踪项目的累计时间
+      this.globalData.timerData.trackingProjects.forEach(project => {
+        // 将后台时间加到 totalElapsedTime
+        project.totalElapsedTime += backgroundDuration;
+        // 重置 startTime 为当前时间
+        project.startTime = Date.now();
+      });
+      
+      // 重置后台时间
+      this.globalData.timerData.backgroundTime = null;
+    }
+    
+    // 更新最后活动时间
+    this.globalData.timerData.lastActiveTime = Date.now();
   }
 });
