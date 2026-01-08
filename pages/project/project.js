@@ -216,12 +216,28 @@ Page({
         if (res.confirm) {
           const { projectId } = this.data;
           const projectList = app.globalData.projectList;
-          const newList = projectList.filter(item => item.id !== projectId);
+          
+          // 如果项目在追踪中，先停止追踪
+          const isTracking = app.globalData.timerData.trackingProjects.some(
+            item => item.projectId === projectId
+          );
+          if (isTracking) {
+            await app.pauseTrackingProject(projectId, false); // false表示不自动设置状态
+          }
 
-          // 保存到全局
+          // 从项目列表中移除
+          const newList = projectList.filter(item => item.id !== projectId);
           await app.saveProjectList(newList);
+
+          // 同步更新页面数据
+          const pages = getCurrentPages();
+          pages.forEach(page => {
+            if (page.route === 'pages/index/index' && page.initData) {
+              page.initData();
+            }
+          });
+
           wx.showToast({ title: '项目已删除', icon: 'success' });
-          // 返回上一页
           wx.navigateBack();
         }
       }
