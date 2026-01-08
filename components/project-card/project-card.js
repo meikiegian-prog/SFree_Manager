@@ -81,6 +81,23 @@ Component({
     // 标记项目完成（触发激励反馈）
     finishProject(e) {
       const projectId = e.currentTarget.dataset.projectid;
+      const { project } = this.data;
+      
+      // 改进检查逻辑：支持收入为0的情况
+      const hasDeadline = project.deadline && project.deadline !== '未设置' && project.deadline.trim() !== '';
+      const hasIncome = project.income !== undefined && project.income !== null && project.income !== '' && !isNaN(Number(project.income));
+      
+      if (!hasDeadline || !hasIncome) {
+        // 显示提示信息并振动
+        wx.vibrateShort({ type: 'light' });
+        wx.showToast({
+          title: '请设置项目信息',
+          icon: 'none',
+          duration: 2000
+        });
+        return;
+      }
+      
       this.triggerEvent('finishProject', { projectId });
     },
 

@@ -575,6 +575,37 @@ App({
           }
         },
         
+        // 半年后
+        { pattern: /半年后/, 
+          calculate: () => {
+            const date = new Date();
+            date.setMonth(date.getMonth() + 6);
+            date.setHours(18, 0, 0, 0); // 默认下午6点
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day} 18:00`;
+          }
+        },
+        
+        // N年后（支持阿拉伯数字和中文数字）
+        { pattern: /(\d+|一|二|三|四|五|六|七|八|九|十)年后/, 
+          calculate: (matches) => {
+            const date = new Date();
+            const years = convertChineseNumber(matches[1]);
+            date.setFullYear(date.getFullYear() + years);
+            date.setHours(18, 0, 0, 0); // 默认下午6点
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day} 18:00`;
+          }
+        },
+        
         // 天数识别：15/十五天后
         { pattern: /(\d+|零|一|二|三|四|五|六|七|八|九|十|十一|十二|十三|十四|十五|十六|十七|十八|十九|二十|二十一|二十二|二十三|二十四|二十五|二十六|二十七|二十八|二十九|三十)天后/, 
           calculate: (matches) => {
@@ -593,8 +624,142 @@ App({
           }
         },
         
-        // 星期识别：一周/一星期后
-        { pattern: /(\d+|零|一|二|三|四|五|六|七)周后/, 
+        // 下个月1号、下周末、下周五等
+        { pattern: /下个月(\d+|一|二|三|四|五|六|七|八|九|十|十一|十二|十三|十四|十五|十六|十七|十八|十九|二十|二十一|二十二|二十三|二十四|二十五|二十六|二十七|二十八|二十九|三十|三十一)号/,
+          calculate: (matches) => {
+            const date = new Date();
+            date.setMonth(date.getMonth() + 1);
+            const day = convertChineseNumber(matches[1]);
+            date.setDate(day);
+            date.setHours(18, 0, 0, 0);
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const dayStr = String(day).padStart(2, '0');
+            const hourStr = String(18).padStart(2, '0');
+            
+            return `${year}-${month}-${dayStr} ${hourStr}:00`;
+          }
+        },
+        
+        // 更灵活的月份日期：10月1号、10月1日下午三点、十月初五早上九点
+        { pattern: /(\d+|一|二|三|四|五|六|七|八|九|十|十一|十二)月(\d+|一|二|三|四|五|六|七|八|九|十|十一|十二|十三|十四|十五|十六|十七|十八|十九|二十|二十一|二十二|二十三|二十四|二十五|二十六|二十七|二十八|二十九|三十|三十一)号\s*(上午|下午)?\s*(\d{1,2})?:?(\d{0,2})?/,
+          calculate: (matches) => {
+            const date = new Date();
+            const month = convertChineseNumber(matches[1]) - 1;
+            const day = convertChineseNumber(matches[2]);
+            
+            // 如果月份已过，设置为明年
+            if (date.getMonth() > month) {
+              date.setFullYear(date.getFullYear() + 1);
+            }
+            
+            date.setMonth(month);
+            date.setDate(day);
+            date.setHours(18, 0, 0, 0);
+            
+            const year = date.getFullYear();
+            const monthStr = String(month + 1).padStart(2, '0');
+            const dayStr = String(day).padStart(2, '0');
+            
+            return `${year}-${monthStr}-${dayStr} 18:00`;
+          }
+        },
+        
+        // 更具弹性的节假日判断：春节、元旦、五一、十一、年底等
+        { 
+          pattern: /(春节|元旦|五一|十一|国庆|年底)/,
+          calculate: () => {
+            const today = new Date();
+            const year = today.getFullYear();
+            
+            // 判断节日日期
+            let month = 1;
+            let day = 1;
+            
+            if(matches[1] === '春节') {
+              // 简单处理：设为2月1日（实际应根据农历计算）
+              month = 2;
+              day = 1;
+            } else if(matches[1] === '五一') {
+              month = 5;
+              day = 1;
+            } else if(matches[1] === '十一' || matches[1] === '国庆') {
+              month = 10;
+              day = 1;
+            } else if(matches[1] === '年底') {
+              month = 12;
+              day = 31;
+            }
+            
+            // 如果节日已过，设为明年的日期
+            const holiday = new Date(year, month - 1, day);
+            if(holiday < today) {
+              holiday.setFullYear(year + 1);
+            }
+            
+            holiday.setHours(18, 0, 0, 0);
+            
+            const holidayYear = holiday.getFullYear();
+            const holidayMonth = String(holiday.getMonth() + 1).padStart(2, '0');
+            const holidayDay = String(holiday.getDate()).padStart(2, '0');
+            
+            return `${holidayYear}-${holidayMonth}-${holidayDay} 18:00`;
+          }
+        },
+        
+        // 更灵活的明年表达：明年、明年3月、明年三月十五
+        { pattern: /明年(\d+|一|二|三|四|五|六|七|八|九|十|十一|十二)?月?(\d+|一|二|三|四|五|六|七|八|九|十|十一|十二|十三|十四|十五|十六|十七|十八|十九|二十|二十一|二十二|二十三|二十四|二十五|二十六|二十七|二十八|二十九|三十|三十一)?号?/,
+          calculate: () => {
+            const date = new Date();
+            date.setFullYear(date.getFullYear() + 1);
+            date.setHours(18, 0, 0, 0);
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day} 18:00`;
+          }
+        },
+        
+        // 明年10月1号
+        { pattern: /明年(\d+|一|二|三|四|五|六|七|八|九|十|十一|十二)月(\d+|一|二|三|四|五|六|七|八|九|十|十一|十二|十三|十四|十五|十六|十七|十八|十九|二十|二十一|二十二|二十三|二十四|二十五|二十六|二十七|二十八|二十九|三十|三十一)号/, 
+          calculate: (matches) => {
+            const date = new Date();
+            date.setFullYear(date.getFullYear() + 1);
+            const month = convertChineseNumber(matches[1]) - 1;
+            const day = convertChineseNumber(matches[2]);
+            
+            date.setMonth(month);
+            date.setDate(day);
+            date.setHours(18, 0, 0, 0);
+            
+            const year = date.getFullYear();
+            const monthStr = String(month + 1).padStart(2, '0');
+            const dayStr = String(day).padStart(2, '0');
+            
+            return `${year}-${monthStr}-${dayStr} 18:00`;
+          }
+        },
+        
+        // 后年
+        { pattern: /后年/, 
+          calculate: () => {
+            const date = new Date();
+            date.setFullYear(date.getFullYear() + 2);
+            date.setHours(18, 0, 0, 0);
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day} 18:00`;
+          }
+        },
+        
+        // 更全面的星期识别：下周几、下周六上午九点、下周三下午三点
+        { pattern: /(下|这)?周(一|二|三|四|五|六|日|天)\s*(上午|下午)?\s*(\d{1,2})?:?(\d{0,2})?/,
           calculate: (matches) => {
             const date = new Date();
             const weeks = convertChineseNumber(matches[1]);
